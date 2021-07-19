@@ -1,0 +1,19 @@
+{
+    "name": "brainstud/json-api",
+    "require": {
+        "php": "^8.0",
+        "illuminate/http": "^8.50",
+        "illuminate/validation": "^8.50"
+    },
+    "autoload": {
+        "psr-4": {
+            "Brainstud\\JsonApi\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Niek Pijp",
+            "email": "niek@brainstud.nl"
+        }
+    ]
+}
