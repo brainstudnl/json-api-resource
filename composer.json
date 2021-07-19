@@ -9,11 +9,5 @@
         "psr-4": {
             "Brainstud\\JsonApi\\": "src/"
         }
-    },
-    "authors": [
-        {
-            "name": "Niek Pijp",
-            "email": "niek@brainstud.nl"
-        }
-    ]
+    }
 }
