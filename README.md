@@ -1,7 +1,73 @@
 # JSON API
+Make your Laravel API [JSON:API](https://jsonapi.org/) compliant with the `Brainstud\JsonApi` package.
+
+## Example usage
+```php
+// Course.php
+
+/**
+ * @property int $id
+ * @property string $title
+ * @property string $description
+ * @property Carbon $created_at
+ * @property Collection $enrollments
+ */
+class Course extends Model 
+{
+    protected $fillable = [
+        'title',
+        'description',
+    ];
+    
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+}
+
+// CourseResource.php
+
+/**
+ * @property Course $resourceObject 
+ */
+class CourseResource extends JsonApiResource
+{
+    protected function register(): array
+    {
+        return [
+            'id' => $this->resourceObject->id,
+            'type' => 'courses',
+            'attributes' => [
+                'title' => $this->resourceObject->title,
+                'description' => $this->resourceObject->description,
+                'created_at' => $this->resourceObject->created_at->format('c'),
+            ],
+            'relationships' => [
+                'enrollments' => ['enrollments', EnrollmentResourceCollection::class],
+            ],
+        ];
+    }
+}
+
+// CoursesController.php
+
+class CoursesController
+{
+    public function index(IndexCoursesRequest $request)
+    {
+        $query = (new CoursesQueryBuilder)->jsonPaginate();
+        return new CourseResourceCollection($query);
+    }
+    
+    public function show(ShowCourseRequest $request, Course $course)
+    {
+        $query = (new CoursesQueryBuilder)->find($course->id);
+        return new CourseResource($query);
+    }
+}
+```
 
 ## Installation
-
 1. Add the brainstud group registry to `composer.json`
 
 ```
@@ -14,23 +80,86 @@
 ```
 
 2. Add your gitlab token to the composer config
-
 `composer config --global --auth gitlab-token.gitlab.com YOUR_TOKEN`
 
 3. Require the package
 `composer require brainstud/json-api`
 
-## Updating
+## Usage
+- Let your resource object extend from `JsonApiResource` instead of `JsonResource`.
+- Implement a `register` method that returns the following array. The register has access to `$this->resourceObject` which contains the current model
+```php
+protected function register(): array
+{
+    return [
+        'id' => $this->resourceObject->identifier,
+        'type' => 'object_type',
+        'attributes' => [
+            'field' => $this->resourceObject->field,
+            'other_field' => $this->resourceObject->other_field,
+        ],
+        'relationships' => [
+            'items' => ['items', ItemsResourceCollection::class],
+            'item' => ['item', ItemResource::class],
+        ],
+        'meta' => [
+            'some_data' => 'some value',         
+        ],
+    ];
+}
+```
 
-1. Update the code
-2. Update the tag: `git tag v1.0.1`
-3. Push the new tag `git push origin v1.0.1`
-4. Publish the new version: `curl --data tag=v1.0.0 "https://<DEPLOY TOKEN SEE 1PASSWORD>:<YOUR API TOKEN>@gitlab.com/api/v4/projects/28242271/packages/composer"`
-5. Check the [packages](https://gitlab.com/brainstud/packages/json-api/-/packages) page if it was successfull
-6. Update the package in your project with composer
+## Relationships
+For the relationships to be included they need to be loaded. You can do this by eager loading them or using a package like [spatie/laravel-query-builder](https://spatie.be/docs/laravel-query-builder/v3/introduction).
 
+## Tweak response
+The `register` method doesn't have access to `$request` like `toArray` of `JsonResource` has.
+If you want to manipulate the response based on the request this can be done by overriding the `addToResponse` method.
 
-## TODO:
-Fix the `JsonApiExceptionHandler`.
+```php
+protected function addToResponse($request, $response): array
+{
+    if ($this->requestWantsMeta($request, 'data')
+        && ($data = $this->getData())
+    ) {
+        $response['meta']['data'] = $data;
+    }
 
-It depends on: https://packagist.org/packages/illuminate/foundation which is abandoned.
+    return $response;
+}
+````
+
+## Exception handler
+This package contains an exception handler to render exceptions as JSON:API error messages.
+Either use this handler directly by editing your `app.php` and registering this singleton
+
+```php
+// app.php
+$app->singleton(
+    Illuminate\Contracts\Debug\ExceptionHandler::class,
+    \Brainstud\JsonApi\Handlers\JsonApiExceptionHandler::class
+);
+```
+
+Or register your own exception handler and delegate the render to the `JsonApiExceptionHandler::render` method.
+
+```php
+// app.php
+$app->singleton(
+    Illuminate\Contracts\Debug\ExceptionHandler::class,
+    App\Exceptions\Handler::class
+);
+
+// handler.php
+public function render($request, Throwable $exception)
+{
+    if ($request->wantsJson()) {
+        return (new JsonApiExceptionHandler($this->container))->render($request, $exception);
+    }
+
+    return parent::render($request, $exception);
+}
+```
+
+## License
+JsonApi is open-sourced software licensed under the [MIT Licence](LICENSE)
