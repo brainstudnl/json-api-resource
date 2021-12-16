@@ -1,11 +1,10 @@
 <?php
 
 
-namespace Brainstud\Packages\JsonApi\Responses\Errors;
-
+namespace Brainstud\JsonApi\Responses\Errors;
 
 use Illuminate\Http\JsonResponse;
-use Brainstud\Packages\JsonApi\Responses\ErrorResponse;
+use Brainstud\JsonApi\Responses\ErrorResponse;
 
 abstract class AbstractError
 {

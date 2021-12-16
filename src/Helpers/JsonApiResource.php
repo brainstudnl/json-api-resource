@@ -1,29 +1,48 @@
 <?php
 
-namespace Brainstud\Packages\JsonApi\Helpers;
+namespace Brainstud\JsonApi\Helpers;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
 
 abstract class JsonApiResource extends JsonResource
 {
-    /** @var mixed */
+    /**
+     * The object represented in this resource
+     * @var mixed
+     */
     protected $resourceObject;
 
-    /** @var array */
-    private $resourceRegistrationData;
+    /**
+     * The registered resource data
+     * @var array
+     */
+    private array $resourceRegistrationData;
 
-    /** @var array */
-    private $resourceRelationshipReferences = [];
+    /**
+     * The relation references of this resource
+     * @var array
+     */
+    private array $resourceRelationshipReferences = [];
 
-    /** @var Collection */
-    public $includedResources;
+    /**
+     * The included resources that the relation references are referencing
+     * @var Collection
+     */
+    public Collection $includedResources;
 
-    /** @var string */
-    public $resourceKey;
+    /**
+     * The unique key of this resource
+     * @var string
+     */
+    public string $resourceKey;
 
-    /** @var int|mixed  */
-    public $resourceDepth = 0;
+    /**
+     * The max relationship depth of this resource
+     * @var int|mixed
+     */
+    public int $resourceDepth = 0;
 
     /**
      * Construct with either a resource or an array with a resource and resource depth
@@ -55,11 +74,9 @@ abstract class JsonApiResource extends JsonResource
         }
     }
 
-    public static function fromRelation($resource, $resourceDepth = 1): self
-    {
-        return new static([$resource, $resourceDepth]);
-    }
-
+    /**
+     * Map all registered relationships to a resource
+     */
     private function mapRelationships(): void
     {
         if (empty($this->resourceRegistrationData['relationships'])) {
@@ -71,18 +88,25 @@ abstract class JsonApiResource extends JsonResource
         }
     }
 
+    /**
+     * Map a single relationship into an included resource
+     * @param $relationKey
+     * @param $relationData
+     */
     private function mapSingleRelationship($relationKey, $relationData): void
     {
         list($resourceData, $resourceClass) = $relationData;
 
+        // The data can be a string reference to relation name on the model or a resource model itself
         $resourceData = is_string($resourceData)
             ? $this->convertRelationStringToReference($resourceData)
             : $resourceData;
 
-        if (! $this->resourceHasData($resourceData, $resourceClass)) {
+        if (!$this->resourceHasData($resourceData, $resourceClass)) {
             return;
         }
 
+        // Is this relation a collection or a single resource
         if (is_subclass_of($resourceClass, JsonApiCollectionResource::class)) {
             $this->addResourceCollectionRelation($relationKey, $resourceData, $resourceClass);
             return;
@@ -91,13 +115,26 @@ abstract class JsonApiResource extends JsonResource
         $this->addResourceRelation($relationKey, $resourceData, $resourceClass);
     }
 
-    private function addResourceCollectionRelation($relationKey, $resourceDataCollection, $resourceCollectionClass): void
-    {
+    /**
+     * Add a collection relationship to the resource relationships and included data
+     * @param $relationKey
+     * @param $resourceDataCollection
+     * @param $resourceCollectionClass
+     */
+    private function addResourceCollectionRelation(
+        $relationKey,
+        $resourceDataCollection,
+        $resourceCollectionClass
+    ): void {
         $resourceClass = (new $resourceCollectionClass([]))->collects;
         $relationshipReferences = [];
 
-        foreach($resourceDataCollection as $resourceData) {
-            $includedResource = $resourceClass::fromRelation($resourceData, $this->resourceDepth + 1);
+        foreach ($resourceDataCollection as $resourceData) {
+            $includedResource = new $resourceClass([$resourceData, $this->resourceDepth + 1]);
+            if (!$includedResource instanceof self) {
+                continue;
+            }
+
             $this->includedResources->push($includedResource);
             $relationshipReferences[] = $includedResource->toRelationshipReferenceArray();
         }
@@ -107,15 +144,31 @@ abstract class JsonApiResource extends JsonResource
         ];
     }
 
+    /**
+     * Add a relation to the resource
+     * @param $relationKey
+     * @param $resourceData
+     * @param $resourceClass
+     */
     private function addResourceRelation($relationKey, $resourceData, $resourceClass): void
     {
-        $includedResource = $resourceClass::fromRelation($resourceData, $this->resourceDepth + 1);
+        $includedResource = new $resourceClass([$resourceData, $this->resourceDepth + 1]);
+        if (!$includedResource instanceof self) {
+            return;
+        }
+
         $this->includedResources->push($includedResource);
         $this->resourceRelationshipReferences[$relationKey] = [
             'data' => $includedResource->toRelationshipReferenceArray(),
         ];
     }
 
+    /**
+     * Check if the resource object has data
+     * @param $resourceData
+     * @param $resourceClass
+     * @return bool
+     */
     private function resourceHasData($resourceData, $resourceClass): bool
     {
         if ($resourceData === null) {
@@ -131,15 +184,27 @@ abstract class JsonApiResource extends JsonResource
         return true;
     }
 
+    /**
+     * Return the relation if it's loaded on the model
+     * @param string $dataPath The method name of the relation
+     * @return mixed The loaded relationship
+     */
     private function convertRelationStringToReference(string $dataPath)
     {
-        if ($this->resourceObject->relationLoaded($dataPath) === false) {
+        if (method_exists($this->resourceObject, 'relationLoaded')
+            && $this->resourceObject->relationLoaded($dataPath) === false
+        ) {
+            return null;
+        } elseif (!isset($this->resourceObject->{$dataPath})) {
             return null;
         }
 
         return $this->resourceObject->{$dataPath};
     }
 
+    /**
+     * Flatten the includes of includes
+     */
     private function addSubIncludes(): void
     {
         foreach ($this->includedResources as $subResource) {
@@ -149,6 +214,11 @@ abstract class JsonApiResource extends JsonResource
         }
     }
 
+    /**
+     * Build the response
+     * @param Request $request
+     * @return array The response
+     */
     public function toArray($request): array
     {
         if (is_null($this->resourceObject)) {
@@ -161,21 +231,25 @@ abstract class JsonApiResource extends JsonResource
             'attributes' => $this->resourceRegistrationData['attributes'],
         ];
 
-        if (! empty($this->resourceRegistrationData['meta'])) {
+        if (!empty($this->resourceRegistrationData['meta'])) {
             $response['meta'] = $this->resourceRegistrationData['meta'];
         }
 
-        if (! empty($this->resourceRegistrationData['links'])) {
+        if (!empty($this->resourceRegistrationData['links'])) {
             $response['links'] = $this->resourceRegistrationData['links'];
         }
 
-        if (! empty($this->resourceRelationshipReferences)) {
+        if (!empty($this->resourceRelationshipReferences)) {
             $response['relationships'] = $this->resourceRelationshipReferences;
         }
 
-        return $response;
+        return $this->addToResponse($request, $response);
     }
 
+    /**
+     * Create a relationship reference
+     * @return array
+     */
     public function toRelationshipReferenceArray(): array
     {
         return [
@@ -184,6 +258,11 @@ abstract class JsonApiResource extends JsonResource
         ];
     }
 
+    /**
+     * Include the loaded relations
+     * @param Request $request
+     * @return array
+     */
     public function with($request): array
     {
         $with = [];
@@ -192,5 +271,16 @@ abstract class JsonApiResource extends JsonResource
         }
 
         return $with;
+    }
+
+    /**
+     * Hook into the generated response and optionally manipulate it.
+     * @param Request $request
+     * @param array $response
+     * @return array
+     */
+    protected function addToResponse($request, array $response): array
+    {
+        return $response;
     }
 }

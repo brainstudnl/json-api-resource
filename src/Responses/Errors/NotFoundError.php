@@ -1,13 +1,12 @@
 <?php
 
 
-namespace Brainstud\Packages\JsonApi\Responses\Errors;
-
+namespace Brainstud\JsonApi\Responses\Errors;
 
 /**
  * Class NotFoundError
  * Used when the resource could not be found
- * @package Brainstud\Packages\JsonApi\Responses\Errors
+ * @package Brainstud\JsonApi\Responses\Errors
  */
 class NotFoundError extends AbstractError
 {

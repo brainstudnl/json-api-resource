@@ -1,13 +1,12 @@
 <?php
 
 
-namespace Brainstud\Packages\JsonApi\Responses\Errors;
-
+namespace Brainstud\JsonApi\Responses\Errors;
 
 /**
  * Class MethodNotAllowedError
  * Used when an API call is made on a method that is not allowed
- * @package Brainstud\Packages\JsonApi\Responses\Errors
+ * @package Brainstud\JsonApi\Responses\Errors
  */
 class MethodNotAllowedError extends AbstractError
 {

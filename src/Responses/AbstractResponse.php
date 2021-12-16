@@ -1,15 +1,14 @@
 <?php
 
 
-namespace Brainstud\Packages\JsonApi\Responses;
-
+namespace Brainstud\JsonApi\Responses;
 
 use Illuminate\Http\JsonResponse;
 
 /**
  * Class AbstractResponse
  * Used to implement json responses
- * @package Brainstud\Packages\JsonApi\Responses
+ * @package Brainstud\JsonApi\Responses
  */
 abstract class AbstractResponse
 {

@@ -1,13 +1,12 @@
 <?php
 
 
-namespace Brainstud\Packages\JsonApi\Responses\Errors;
-
+namespace Brainstud\JsonApi\Responses\Errors;
 
 /**
  * Class ForbiddenError
  * Used when the user doesn't have permission to execute the requested operation
- * @package Brainstud\Packages\JsonApi\Responses\Errors
+ * @package Brainstud\JsonApi\Responses\Errors
  */
 class ForbiddenError extends AbstractError
 {

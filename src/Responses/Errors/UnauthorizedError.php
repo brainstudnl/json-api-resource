@@ -1,13 +1,12 @@
 <?php
 
 
-namespace Brainstud\Packages\JsonApi\Responses\Errors;
-
+namespace Brainstud\JsonApi\Responses\Errors;
 
 /**
  * Class UnauthorizedError
  * Used when an API call requires authentication
- * @package Brainstud\Packages\JsonApi\Responses\Errors
+ * @package Brainstud\JsonApi\Responses\Errors
  */
 class UnauthorizedError extends AbstractError
 {

@@ -1,15 +1,14 @@
 <?php
 
 
-namespace Brainstud\Packages\JsonApi\Responses;
-
+namespace Brainstud\JsonApi\Responses;
 
 use Illuminate\Http\JsonResponse;
 
 /**
  * Class ErrorResponse
  * Create an error response
- * @package Brainstud\Packages\JsonApi\Responses
+ * @package Brainstud\JsonApi\Responses
  */
 class ErrorResponse extends AbstractResponse
 {

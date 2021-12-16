@@ -1,14 +1,13 @@
 <?php
 
 
-namespace Brainstud\Packages\JsonApi\Traits;
-
+namespace Brainstud\JsonApi\Traits;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
-use Brainstud\Packages\JsonApi\Responses\ErrorResponse;
-use Brainstud\Packages\JsonApi\Responses\Errors\DefaultError;
+use Brainstud\JsonApi\Responses\ErrorResponse;
+use Brainstud\JsonApi\Responses\Errors\DefaultError;
 
 trait JsonErrorResponseOnFailedValidation
 {

@@ -1,8 +1,7 @@
 <?php
 
 
-namespace Brainstud\Packages\JsonApi\Responses\Errors;
-
+namespace Brainstud\JsonApi\Responses\Errors;
 
 class InternalServerError extends AbstractError
 {
