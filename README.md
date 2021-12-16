@@ -161,5 +161,23 @@ public function render($request, Throwable $exception)
 }
 ```
 
+### Return error response
+There are multiple ways to return an error page
+
+```php
+// Throw an exception that will be handled by the JsonApiExceptionHandler
+throw new UnprocessableEntityHttpException();
+
+// Return a defined error response
+return (new UnprocessableEntityError)->response();
+
+// Return a custom error response
+return ErrorResponse::make(new DefaultError(
+    'PROCESSING_ERROR',
+    'Could not save item',
+    'An error occurred during saving of the item'
+), Response::HTTP_INTERNAL_SERVER_ERROR);
+```
+
 ## License
 JsonApi is open-sourced software licensed under the [MIT Licence](LICENSE)
