@@ -1,5 +1,9 @@
 {
     "name": "brainstud/json-api",
+    "description": "Build a JSON:API compliant Laravel API",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "license": "MIT",
     "require": {
         "php": "^7.4 || ^8.0",
         "laravel/framework": "^8.0"
