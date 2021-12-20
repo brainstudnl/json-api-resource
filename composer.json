@@ -1,6 +1,6 @@
 {
-    "name": "brainstud/json-api",
-    "description": "Build a JSON:API compliant Laravel API",
+    "name": "brainstud/json-api-resource",
+    "description": "Build JSON:API compliant Laravel API resources",
     "minimum-stability": "dev",
     "prefer-stable": true,
     "license": "MIT",

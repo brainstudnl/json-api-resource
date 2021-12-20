@@ -1,4 +1,4 @@
-# JSON API
+# JSON:API Resource for Laravel
 Make your Laravel API [JSON:API](https://jsonapi.org/) compliant with the `Brainstud\JsonApi` package.
 
 ## Example usage
@@ -88,6 +88,7 @@ class CoursesController
 ## Usage
 - Let your resource object extend from `JsonApiResource` instead of `JsonResource`.
 - Implement a `register` method that returns the following array. The register has access to `$this->resourceObject` which contains the current model
+
 ```php
 protected function register(): array
 {
@@ -110,7 +111,8 @@ protected function register(): array
 ```
 
 ## Relationships
-For the relationships to be included they need to be loaded. You can do this by eager loading them or using a package like [spatie/laravel-query-builder](https://spatie.be/docs/laravel-query-builder/v3/introduction).
+[JSON:API: Includes](https://jsonapi.org/format/#fetching-includes)
+For the relationships to be included they need to be loaded. This can be done by implementing a `?include` parameter or using [spatie/laravel-query-builder](https://spatie.be/docs/laravel-query-builder/v3/introduction).
 
 ## Tweak response
 The `register` method doesn't have access to `$request` like `toArray` of `JsonResource` has.
