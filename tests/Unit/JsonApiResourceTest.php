@@ -10,7 +10,7 @@ use Brainstud\JsonApi\Tests\Resources\TestResourceWithResourceRelation;
 use Brainstud\JsonApi\Tests\TestCase;
 use Illuminate\Support\Facades\Route;
 
-class TestJsonApiResource extends TestCase
+class JsonApiResourceTest extends TestCase
 {
     public function testResource()
     {
@@ -133,11 +133,11 @@ class TestJsonApiResource extends TestCase
             ],
             'included' => [
                 [
+                    'id' => 'relation-1',
+                    'type' => 'test_resource',
                     'attributes' => [
                         'title' => 'a relation'
                     ],
-                    'id' => 'relation-1',
-                    'type' => 'test_resource'
                 ]
             ]
         ]);
@@ -198,25 +198,25 @@ class TestJsonApiResource extends TestCase
             ],
             'included' => [
                 [
+                    'id' => 'relation-1',
+                    'type' => 'test_resource',
                     'attributes' => [
                         'title' => 'a relation'
                     ],
-                    'id' => 'relation-1',
-                    'type' => 'test_resource'
                 ],
                 [
+                    'id' => 'relation-1',
+                    'type' => 'test_resource_with_relations',
                     'attributes' => [
                         'title' => 'a relation'
                     ],
-                    'id' => 'relation-1',
-                    'type' => 'test_resource_with_relations'
                 ],
                 [
+                    'id' => 'relation-2',
+                    'type' => 'test_resource_with_relations',
                     'attributes' => [
                         'title' => 'relation b'
                     ],
-                    'id' => 'relation-2',
-                    'type' => 'test_resource_with_relations'
                 ]
             ]
         ]);
