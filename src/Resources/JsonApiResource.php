@@ -75,6 +75,12 @@ abstract class JsonApiResource extends JsonResource
     }
 
     /**
+     * Register the resource definition
+     * @return array
+     */
+    abstract protected function register(): array;
+
+    /**
      * Map all registered relationships to a resource
      */
     private function mapRelationships(): void
