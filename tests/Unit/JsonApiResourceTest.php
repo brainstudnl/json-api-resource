@@ -455,7 +455,7 @@ class JsonApiResourceTest extends TestCase
         ]);
         $base->refresh()->load(['relationB', 'relationB.relationB', 'relationB.relationB.relationB']);
 
-        Route::get('test-route', fn() => TestResourceWithRelations::make($base, 4)->response()->setStatusCode(200));
+        Route::get('test-route', fn() => TestResourceWithRelations::make($base, 3)->response()->setStatusCode(200));
         $response = $this->getJson('test-route');
 
         $response->assertOk();
