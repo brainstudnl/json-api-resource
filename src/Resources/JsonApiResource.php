@@ -44,13 +44,17 @@ abstract class JsonApiResource extends JsonResource
      */
     public int $resourceDepth = 0;
 
+    private int $maxResourceDepth;
+
     /**
      * Construct with either a resource or an array with a resource and resource depth
      * @param $jsonApiResourceData
+     * @param int $maxResourceDepth
      */
-    public function __construct($jsonApiResourceData)
+    public function __construct($jsonApiResourceData, int $maxResourceDepth = 2)
     {
         $resource = $jsonApiResourceData;
+        $this->maxResourceDepth = $maxResourceDepth;
         $resourceDepth = 0;
 
         if (is_array($jsonApiResourceData)) {
@@ -65,11 +69,11 @@ abstract class JsonApiResource extends JsonResource
         $this->resourceKey = "{$this->resourceRegistrationData['type']}.{$this->resourceRegistrationData['id']}";
         $this->includedResources = new Collection;
 
-        if ($this->resourceDepth < 2) {
+        if ($this->resourceDepth < $maxResourceDepth) {
             $this->mapRelationships();
         }
 
-        if ($this->resourceDepth === 0) {
+        if ($this->resourceDepth < ($this->maxResourceDepth - 1)) {
             $this->addSubIncludes();
         }
     }
@@ -136,7 +140,7 @@ abstract class JsonApiResource extends JsonResource
         $relationshipReferences = [];
 
         foreach ($resourceDataCollection as $resourceData) {
-            $includedResource = new $resourceClass([$resourceData, $this->resourceDepth + 1]);
+            $includedResource = new $resourceClass([$resourceData, $this->resourceDepth + 1], $this->maxResourceDepth);
             if (!$includedResource instanceof self) {
                 continue;
             }
@@ -158,7 +162,7 @@ abstract class JsonApiResource extends JsonResource
      */
     private function addResourceRelation($relationKey, $resourceData, $resourceClass): void
     {
-        $includedResource = new $resourceClass([$resourceData, $this->resourceDepth + 1]);
+        $includedResource = new $resourceClass([$resourceData, $this->resourceDepth + 1], $this->maxResourceDepth);
         if (!$includedResource instanceof self) {
             return;
         }
