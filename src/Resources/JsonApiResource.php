@@ -238,7 +238,7 @@ abstract class JsonApiResource extends JsonResource
         $response = [
             'id' => $this->resourceRegistrationData['id'],
             'type' => $this->resourceRegistrationData['type'],
-            'attributes' => $this->resourceRegistrationData['attributes'],
+            'attributes' => $this->getAttributes($request),
         ];
 
         if (!empty($this->resourceRegistrationData['meta'])) {
@@ -254,6 +254,25 @@ abstract class JsonApiResource extends JsonResource
         }
 
         return $this->addToResponse($request, $response);
+    }
+
+    /**
+     * @param Request $request
+     * @return mixed
+     */
+    private function getAttributes($request)
+    {
+        $attributes = $this->resourceRegistrationData['attributes'];
+        $type = $this->resourceRegistrationData['type'];
+
+        if (!($fieldSet = $request->query('fields'))
+            || !array_key_exists($type, $fieldSet)
+            || !($fields = explode(',', $fieldSet[$type]))
+        ) {
+            return $attributes;
+        }
+
+        return array_filter($attributes, fn ($key) => in_array($key, $fields), ARRAY_FILTER_USE_KEY);
     }
 
     /**

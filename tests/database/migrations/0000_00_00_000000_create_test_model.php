@@ -12,6 +12,7 @@ class CreateTestModel extends Migration
             $table->id();
             $table->string('identifier');
             $table->string('title');
+            $table->string('description')->nullable();
             $table->integer('relation_a_id')->nullable();
             $table->integer('test_model_id')->nullable();
             $table->timestamps();

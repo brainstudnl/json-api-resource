@@ -4,6 +4,8 @@ namespace Brainstud\JsonApi\Tests\Unit;
 
 use Brainstud\JsonApi\Tests\Models\TestModel;
 use Brainstud\JsonApi\Tests\Resources\TestResource;
+use Brainstud\JsonApi\Tests\Resources\TestResourceWithDescription;
+use Brainstud\JsonApi\Tests\Resources\TestResourceWithDescriptionA;
 use Brainstud\JsonApi\Tests\Resources\TestResourceWithMetadata;
 use Brainstud\JsonApi\Tests\Resources\TestResourceWithRelations;
 use Brainstud\JsonApi\Tests\Resources\TestResourceWithResourceRelation;
@@ -519,6 +521,75 @@ class JsonApiResourceTest extends TestCase
                         'title' => 'sub sub relation',
                     ],
                 ],
+            ]
+        ]);
+    }
+
+    public function testResourceSparseFieldset()
+    {
+        $model = (new TestModel([
+            'identifier' => 'model-1',
+            'title' => 'a title',
+            'description' => 'the description',
+        ]));
+
+        Route::get('test-route', fn() => TestResourceWithDescriptionA::make($model));
+        $response = $this->getJson('test-route?fields[test_resource_with_description_a]=description');
+
+        $response->assertOk();
+        $response->assertExactJson([
+            'data' => [
+                'id' => 'model-1',
+                'type' => 'test_resource_with_description_a',
+                'attributes' => [
+                    'description' => 'the description',
+                ],
+            ],
+        ]);
+    }
+
+    public function testResourceIncludedSparseFieldset()
+    {
+        $model = (new TestModel([
+            'identifier' => 'model-1',
+            'title' => 'a title',
+            'description' => 'the description',
+        ]));
+        $relation = (new TestModel([
+            'identifier' => 'relation-1',
+            'title' => 'a relation',
+            'description' => 'related description'
+        ]));
+        $model->relationA()->associate($relation);
+
+        Route::get('test-route', fn() => TestResourceWithDescriptionA::make($model));
+        $response = $this->getJson('test-route?fields[test_resource_with_description_a]=description&fields[test_resource_with_description_b]=title&include=relation_a');
+
+        $response->assertOk();
+        $response->assertExactJson([
+            'data' => [
+                'id' => 'model-1',
+                'type' => 'test_resource_with_description_a',
+                'attributes' => [
+                    'description' => 'the description',
+                ],
+                'relationships' => [
+                    'relation_a' => [
+                        'data' => [
+                            'id' => 'relation-1',
+                            'type' => 'test_resource_with_description_b',
+                        ]
+                    ],
+                ]
+            ],
+            'included' => [
+                [
+                    'id' => 'relation-1',
+                    'type' => 'test_resource_with_description_b',
+                    'attributes' => [
+                        'title' => 'a relation'
+                    ],
+                ]
             ]
         ]);
     }
