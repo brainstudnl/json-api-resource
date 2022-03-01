@@ -4,7 +4,6 @@ namespace Brainstud\JsonApi\Tests\Unit;
 
 use Brainstud\JsonApi\Tests\Models\TestModel;
 use Brainstud\JsonApi\Tests\Resources\TestResource;
-use Brainstud\JsonApi\Tests\Resources\TestResourceWithDescription;
 use Brainstud\JsonApi\Tests\Resources\TestResourceWithDescriptionA;
 use Brainstud\JsonApi\Tests\Resources\TestResourceWithMetadata;
 use Brainstud\JsonApi\Tests\Resources\TestResourceWithRelations;

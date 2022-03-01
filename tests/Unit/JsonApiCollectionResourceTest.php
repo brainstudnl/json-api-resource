@@ -4,7 +4,6 @@ namespace Brainstud\JsonApi\Tests\Unit;
 
 use Brainstud\JsonApi\Tests\Models\TestModel;
 use Brainstud\JsonApi\Tests\Resources\TestCollectionResource;
-use Brainstud\JsonApi\Tests\Resources\TestResource;
 use Brainstud\JsonApi\Tests\TestCase;
 use Illuminate\Support\Facades\Route;
 
