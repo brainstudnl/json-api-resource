@@ -101,4 +101,97 @@ class JsonApiCollectionResourceTest extends TestCase
             ],
         ]);
     }
+
+    public function testCollectionResourceEnlargeResourceDepth()
+    {
+        $base = TestModel::create([
+            'identifier' => 'model-1',
+            'title' => 'a title',
+        ]);
+        $relation = TestModel::create([
+            'identifier' => 'relation-1',
+            'title' => 'a relation',
+            'test_model_id' => $base->id,
+        ]);
+        $subrelation = TestModel::create([
+            'identifier' => 'relation-2',
+            'title' => 'sub relation',
+            'test_model_id' => $relation->id,
+        ]);
+        $subsubrelation = TestModel::create([
+            'identifier' => 'relation-3',
+            'title' => 'sub sub relation',
+            'test_model_id' => $subrelation->id,
+        ]);
+        $base->refresh()->load(['relationB', 'relationB.relationB', 'relationB.relationB.relationB']);
+
+        Route::get('test-route', fn() => TestCollectionResource::make([[$base, 3]]));
+        $response = $this->getJson('test-route');
+
+        $response->assertOk();
+        $response->assertExactJson([
+            'data' => [
+                [
+                    'id' => 'model-1',
+                    'type' => 'test_resource_with_relations',
+                    'attributes' => [
+                        'title' => 'a title',
+                    ],
+                    'relationships' => [
+                        'relation_b' => [
+                            'data' => [
+                                [
+                                    'id' => 'relation-1',
+                                    'type' => 'test_resource_with_relations',
+                                ]
+                            ],
+                        ],
+                    ],
+                ]
+            ],
+            'included' => [
+                [
+                    'id' => 'relation-1',
+                    'type' => 'test_resource_with_relations',
+                    'attributes' => [
+                        'title' => 'a relation',
+                    ],
+                    'relationships' => [
+                        'relation_b' => [
+                            'data' => [
+                                [
+                                    'id' => 'relation-2',
+                                    'type' => 'test_resource_with_relations',
+                                ]
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'id' => 'relation-2',
+                    'type' => 'test_resource_with_relations',
+                    'attributes' => [
+                        'title' => 'sub relation',
+                    ],
+                    'relationships' => [
+                        'relation_b' => [
+                            'data' => [
+                                [
+                                    'id' => 'relation-3',
+                                    'type' => 'test_resource_with_relations',
+                                ]
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'id' => 'relation-3',
+                    'type' => 'test_resource_with_relations',
+                    'attributes' => [
+                        'title' => 'sub sub relation',
+                    ],
+                ],
+            ],
+        ]);
+    }
 }
