@@ -4,7 +4,6 @@ namespace Brainstud\JsonApi\Tests\Unit;
 
 use Brainstud\JsonApi\Tests\Models\TestModel;
 use Brainstud\JsonApi\Tests\Resources\TestResource;
-use Brainstud\JsonApi\Tests\Resources\TestResourceWithDescription;
 use Brainstud\JsonApi\Tests\Resources\TestResourceWithDescriptionA;
 use Brainstud\JsonApi\Tests\Resources\TestResourceWithMetadata;
 use Brainstud\JsonApi\Tests\Resources\TestResourceWithRelations;
@@ -350,12 +349,177 @@ class JsonApiResourceTest extends TestCase
                     'type' => 'test_resource_with_relations'
                 ],
                 [
+                    'id' => 'relation-2',
+                    'type' => 'test_resource_with_relations',
                     'attributes' => [
                         'title' => 'sub relation',
                     ],
-                    'id' => 'relation-2',
-                    'type' => 'test_resource_with_relations'
                 ]
+            ]
+        ]);
+    }
+
+    public function testResourceExceedResourceDepth()
+    {
+        $base = TestModel::create([
+            'identifier' => 'model-1',
+            'title' => 'a title',
+        ]);
+        $relation = TestModel::create([
+            'identifier' => 'relation-1',
+            'title' => 'a relation',
+            'test_model_id' => $base->id,
+        ]);
+        $subrelation = TestModel::create([
+            'identifier' => 'relation-2',
+            'title' => 'sub relation',
+            'test_model_id' => $relation->id,
+        ]);
+        $subsubrelation = TestModel::create([
+            'identifier' => 'relation-3',
+            'title' => 'sub sub relation',
+            'test_model_id' => $subrelation->id,
+        ]);
+        $base->refresh()->load(['relationB', 'relationB.relationB', 'relationB.relationB.relationB']);
+
+        Route::get('test-route', fn() => TestResourceWithRelations::make($base)->response()->setStatusCode(200));
+        $response = $this->getJson('test-route');
+
+        $response->assertOk();
+        $response->assertExactJson([
+            'data' => [
+                'id' => 'model-1',
+                'type' => 'test_resource_with_relations',
+                'attributes' => [
+                    'title' => 'a title',
+                ],
+                'relationships' => [
+                    'relation_b' => [
+                        'data' => [
+                            [
+                                'id' => 'relation-1',
+                                'type' => 'test_resource_with_relations',
+                            ]
+                        ],
+                    ],
+                ],
+            ],
+            'included' => [
+                [
+                    'id' => 'relation-1',
+                    'type' => 'test_resource_with_relations',
+                    'attributes' => [
+                        'title' => 'a relation',
+                    ],
+                    'relationships' => [
+                        'relation_b' => [
+                            'data' => [
+                                [
+                                    'id' => 'relation-2',
+                                    'type' => 'test_resource_with_relations',
+                                ]
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'id' => 'relation-2',
+                    'type' => 'test_resource_with_relations',
+                    'attributes' => [
+                        'title' => 'sub relation',
+                    ],
+                ]
+            ]
+        ]);
+    }
+
+    public function testResourceEnlargeResourceDepth()
+    {
+        $base = TestModel::create([
+            'identifier' => 'model-1',
+            'title' => 'a title',
+        ]);
+        $relation = TestModel::create([
+            'identifier' => 'relation-1',
+            'title' => 'a relation',
+            'test_model_id' => $base->id,
+        ]);
+        $subrelation = TestModel::create([
+            'identifier' => 'relation-2',
+            'title' => 'sub relation',
+            'test_model_id' => $relation->id,
+        ]);
+        $subsubrelation = TestModel::create([
+            'identifier' => 'relation-3',
+            'title' => 'sub sub relation',
+            'test_model_id' => $subrelation->id,
+        ]);
+        $base->refresh()->load(['relationB', 'relationB.relationB', 'relationB.relationB.relationB']);
+
+        Route::get('test-route', fn() => TestResourceWithRelations::make([$base, 3])->response()->setStatusCode(200));
+        $response = $this->getJson('test-route');
+
+        $response->assertOk();
+        $response->assertExactJson([
+            'data' => [
+                'id' => 'model-1',
+                'type' => 'test_resource_with_relations',
+                'attributes' => [
+                    'title' => 'a title',
+                ],
+                'relationships' => [
+                    'relation_b' => [
+                        'data' => [
+                            [
+                                'id' => 'relation-1',
+                                'type' => 'test_resource_with_relations',
+                            ]
+                        ],
+                    ],
+                ],
+            ],
+            'included' => [
+                [
+                    'id' => 'relation-1',
+                    'type' => 'test_resource_with_relations',
+                    'attributes' => [
+                        'title' => 'a relation',
+                    ],
+                    'relationships' => [
+                        'relation_b' => [
+                            'data' => [
+                                [
+                                    'id' => 'relation-2',
+                                    'type' => 'test_resource_with_relations',
+                                ]
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'id' => 'relation-2',
+                    'type' => 'test_resource_with_relations',
+                    'attributes' => [
+                        'title' => 'sub relation',
+                    ],
+                    'relationships' => [
+                        'relation_b' => [
+                            'data' => [
+                                [
+                                    'id' => 'relation-3',
+                                    'type' => 'test_resource_with_relations',
+                                ]
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'id' => 'relation-3',
+                    'type' => 'test_resource_with_relations',
+                    'attributes' => [
+                        'title' => 'sub sub relation',
+                    ],
+                ],
             ]
         ]);
     }
