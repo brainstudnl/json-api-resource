@@ -131,6 +131,20 @@ protected function addToResponse($request, $response): array
 }
 ````
 
+## Resource depth
+The resource depth has a default of 2. This can be changed by passing an array to the resource where the second item is the required resource depth.
+In the following example we use a depth of 3:
+
+```php
+public function show(ShowCourseRequest $request, Course $course)
+{
+    $query = (new CoursesQueryBuilder)->find($course->id);
+    return new CourseResource([$query, 3]);
+}
+```
+
+Which allows us to ask for an include nested 3 levels deep: `/courses/{identifier}?include=content,content.answers,content.answers.feedback`
+
 ## Exception handler
 This package contains an exception handler to render exceptions as JSON:API error messages.
 Either use this handler directly by editing your `app.php` and registering this singleton
