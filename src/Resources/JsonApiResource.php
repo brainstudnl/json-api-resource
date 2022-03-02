@@ -44,6 +44,8 @@ abstract class JsonApiResource extends JsonResource
      */
     public int $resourceDepth = 0;
 
+    private int $maxResourceDepth;
+
     /**
      * Construct with either a resource or an array with a resource and resource depth
      * @param $jsonApiResourceData
@@ -51,11 +53,13 @@ abstract class JsonApiResource extends JsonResource
     public function __construct($jsonApiResourceData)
     {
         $resource = $jsonApiResourceData;
-        $resourceDepth = 0;
 
         if (is_array($jsonApiResourceData)) {
-            list($resource, $resourceDepth) = $jsonApiResourceData;
+            list($resource, $maxResourceDepth, $resourceDepth) = array_pad($jsonApiResourceData, 3, null);
         }
+
+        $this->maxResourceDepth = $maxResourceDepth ?? 2;
+        $resourceDepth = $resourceDepth ?? 0;
 
         parent::__construct($resource);
 
@@ -65,11 +69,11 @@ abstract class JsonApiResource extends JsonResource
         $this->resourceKey = "{$this->resourceRegistrationData['type']}.{$this->resourceRegistrationData['id']}";
         $this->includedResources = new Collection;
 
-        if ($this->resourceDepth < 2) {
+        if ($this->resourceDepth < $this->maxResourceDepth) {
             $this->mapRelationships();
         }
 
-        if ($this->resourceDepth === 0) {
+        if ($this->resourceDepth < ($this->maxResourceDepth - 1)) {
             $this->addSubIncludes();
         }
     }
@@ -136,7 +140,7 @@ abstract class JsonApiResource extends JsonResource
         $relationshipReferences = [];
 
         foreach ($resourceDataCollection as $resourceData) {
-            $includedResource = new $resourceClass([$resourceData, $this->resourceDepth + 1]);
+            $includedResource = new $resourceClass([$resourceData, $this->maxResourceDepth, $this->resourceDepth + 1]);
             if (!$includedResource instanceof self) {
                 continue;
             }
@@ -158,7 +162,7 @@ abstract class JsonApiResource extends JsonResource
      */
     private function addResourceRelation($relationKey, $resourceData, $resourceClass): void
     {
-        $includedResource = new $resourceClass([$resourceData, $this->resourceDepth + 1]);
+        $includedResource = new $resourceClass([$resourceData, $this->maxResourceDepth, $this->resourceDepth + 1]);
         if (!$includedResource instanceof self) {
             return;
         }
