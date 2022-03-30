@@ -68,22 +68,11 @@ class CoursesController
 ```
 
 ## Installation
-1. Add the brainstud group registry to `composer.json`
+Require the package
 
+```bash
+composer require brainstud/json-api-resource
 ```
-"repositories": {
-    "3254464": {
-        "type": "composer",
-        "url": "https://gitlab.com/api/v4/group/3254464/-/packages/composer/"
-    }
-},
-```
-
-2. Add your gitlab token to the composer config
-`composer config --global --auth gitlab-token.gitlab.com YOUR_TOKEN`
-
-3. Require the package
-`composer require brainstud/json-api`
 
 ## Usage
 - Let your resource object extend from `JsonApiResource` instead of `JsonResource`.
