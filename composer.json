@@ -19,10 +19,10 @@
         }
     },
     "scripts": {
-        "test": "vendor/bin/phpunit"
+        "test": "./vendor/bin/phpunit --configuration ./phpunit.xml"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.5",
-        "orchestra/testbench": "^7"
+        "phpunit/phpunit": "^9.6.3",
+        "orchestra/testbench": "^7.22.0"
     }
 }
