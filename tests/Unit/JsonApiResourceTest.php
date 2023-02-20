@@ -2,594 +2,259 @@
 
 namespace Brainstud\JsonApi\Tests\Unit;
 
-use Brainstud\JsonApi\Tests\Models\TestModel;
-use Brainstud\JsonApi\Tests\Resources\TestResource;
-use Brainstud\JsonApi\Tests\Resources\TestResourceWithDescriptionA;
-use Brainstud\JsonApi\Tests\Resources\TestResourceWithMetadata;
-use Brainstud\JsonApi\Tests\Resources\TestResourceWithRelations;
-use Brainstud\JsonApi\Tests\Resources\TestResourceWithResourceRelation;
+use Brainstud\JsonApi\Tests\Models\Account;
+use Brainstud\JsonApi\Tests\Models\Comment;
+use Brainstud\JsonApi\Tests\Models\Post;
+use Brainstud\JsonApi\Tests\Resources\AccountResource;
+use Brainstud\JsonApi\Tests\Resources\PostResource;
 use Brainstud\JsonApi\Tests\TestCase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 class JsonApiResourceTest extends TestCase
 {
-    public function testResource()
+    public function testBasicResource()
     {
-        $model = (new TestModel([
-            'identifier' => 'model-1',
-            'title' => 'a title',
-        ]));
+        $account = Account::factory()->create();
 
-        Route::get('test-route', fn() => TestResource::make($model));
+        Route::get('test-route', fn() => AccountResource::make($account));
         $response = $this->getJson('test-route');
 
-        $response->assertOk();
         $response->assertExactJson([
             'data' => [
-                'id' => 'model-1',
-                'type' => 'test_resource',
+                'id' => $account->identifier,
+                'type' => 'accounts',
                 'attributes' => [
-                    'title' => 'a title',
+                    'name' => $account->name,
                 ],
             ],
         ]);
     }
 
-    public function testResourceCollection()
+    public function testBasicResourceCollection()
     {
-        $model1 = (new TestModel([
-            'identifier' => 'model-1',
-            'title' => 'a title',
-        ]));
-        $model2 = (new TestModel([
-            'identifier' => 'model-2',
-            'title' => 'second title',
-        ]));
+        $accounts = Account::factory()->count(3)->create();
 
-        Route::get('test-route', fn() => TestResource::collection([$model1, $model2]));
+        Route::get('test-route', fn() => AccountResource::collection($accounts));
         $response = $this->getJson('test-route');
 
-        $response->assertOk();
         $response->assertExactJson([
-            'data' => [
-                [
-                    'id' => 'model-1',
-                    'type' => 'test_resource',
-                    'attributes' => [
-                        'title' => 'a title',
-                    ],
-                ],
-                [
-                    'id' => 'model-2',
-                    'type' => 'test_resource',
-                    'attributes' => [
-                        'title' => 'second title',
-                    ],
-                ]
-            ],
+            'data' => $this->createJsonResource($accounts),
         ]);
     }
 
-    public function testResourceWithMetadata()
+    public function testResourceWithEmptyRelationLoaded()
     {
-        $model = (new TestModel([
-            'identifier' => 'model-1',
-            'title' => 'a title',
-            'test_count' => 5,
-            'edit_link' => 'https://example.com'
-        ]));
+        $account = Account::factory()
+            ->create();
 
-        Route::get('test-route', fn() => TestResourceWithMetadata::make($model));
+        Route::get('test-route', fn () => (
+        AccountResource::make(Account::first()->load('posts'))
+        ));
         $response = $this->getJson('test-route');
 
-        $response->assertOk();
         $response->assertExactJson([
-            'data' => [
-                'id' => 'model-1',
-                'type' => 'test_resource_with_metadata',
-                'attributes' => [
-                    'title' => 'a title',
-                ],
-                'meta' => [
-                    'test_count' => 5
-                ],
-                'links' => [
-                    'edit' => 'https://example.com'
-                ],
-            ],
+            'data' => $this->createJsonResource($account),
         ]);
     }
 
-    public function testResourceWithSingleRelations()
+    public function testRelatedResource()
     {
-        $base = (new TestModel([
-            'identifier' => 'model-1',
-            'title' => 'a title',
-        ]));
-        $relation = (new TestModel([
-            'identifier' => 'relation-1',
-            'title' => 'a relation'
-        ]));
-        $base->relationA()->associate($relation);
+        $post = Post::factory()->create();
+        $author = $post->author;
 
-        Route::get('test-route', fn() => TestResourceWithRelations::make($base));
-        $response = $this->getJson('test-route');
+        Route::get('test-route', fn (Request $request) => (
+            PostResource::make(Post::with($request->query()['includes'])->first())
+        ));
+        $response = $this->getJson('test-route?includes=author');
 
-        $response->assertOk();
         $response->assertExactJson([
-            'data' => [
-                'id' => 'model-1',
-                'type' => 'test_resource_with_relations',
-                'attributes' => [
-                    'title' => 'a title',
-                ],
-                'relationships' => [
-                    'relation_a' => [
-                        'data' => [
-                            'id' => 'relation-1',
-                            'type' => 'test_resource',
-                        ]
-                    ],
-                ]
-            ],
+            'data' => $this->createJsonResource($post, [ 'author' => $author]),
+            'included' => [ $this->createJsonResource($author)],
+        ]);
+    }
+
+
+    public function testRelatedResources()
+    {
+        $post = Post::factory()
+            ->has(Comment::factory()->count(3))
+            ->create();
+        $comments = $post->comments;
+
+        Route::get('test-route', fn (Request $request) => (
+            PostResource::make(Post::with($request->query()['includes'])->first())
+        ));
+        $response = $this->getJson('test-route?includes=comments');
+
+        $response->assertExactJson([
+            'data' => $this->createJsonResource($post, [ 'comments' => $comments]),
+            'included' => $this->createJsonResource($comments),
+        ]);
+    }
+
+    public function testDuplicatedRelatedResources()
+    {
+        $post = Post::factory()->create();
+        $author = $post->author;
+
+        $comment = Comment::factory([
+            'account_id' => $author->id,
+            'post_id' => $post->id,
+        ])->create();
+
+        Route::get('test-route', fn (Request $request) => (
+            PostResource::make(Post::with(explode(',', $request->query()['includes']))->first())
+        ));
+        $response = $this->getJson('test-route?includes=author,comments,comments.commenter');
+
+        $response->assertExactJson([
+            'data' => $this->createJsonResource($post, ['author' => $author, 'comments' => [ $comment ]]),
             'included' => [
-                [
-                    'id' => 'relation-1',
-                    'type' => 'test_resource',
-                    'attributes' => [
-                        'title' => 'a relation'
-                    ],
-                ]
+                $this->createJsonResource($author),
+                $this->createJsonResource($comment, [ 'commenter' => $author ]),
             ]
         ]);
     }
 
-    public function testResourceWithMultipleRelations()
+
+    public function testDeepRelatedResource()
     {
-        $base = TestModel::create([
-            'identifier' => 'model-1',
-            'title' => 'a title',
-        ]);
-        $relation1 = TestModel::create([
-            'identifier' => 'relation-1',
-            'title' => 'a relation',
-            'test_model_id' => $base->id,
-        ]);
-        $base->relationA()->associate($relation1);
-        $base->save();
+        $account = Account::factory()->create();
 
-        TestModel::create([
-            'identifier' => 'relation-2',
-            'title' => 'relation b',
-            'test_model_id' => $base->id,
-        ]);
-        $base->refresh()->load('relationA', 'relationB');
+        $post = Post::factory([
+            'author_id' => $account->id,
+        ])
+            ->has(Comment::factory()->has(Account::factory(), 'commenter'), 'comments')
+            ->has(Comment::factory()->for($account, 'commenter'), 'comments')
+            ->create();
+        $author = $post->author;
+        $comments = $post->comments;
+        $commenter = $comments->first()->commenter;
+        $authorAsCommenter = $comments[1]->commenter;
 
-        Route::get('test-route', fn() => TestResourceWithRelations::make($base)->response()->setStatusCode(200));
-        $response = $this->getJson('test-route');
+        Route::get('test-route', fn (Request $request) => (
+            AccountResource::make([Account::with(explode(',', $request->query()['includes']))->first(), 3])
+        ));
+        $response = $this->getJson('test-route?includes=posts,posts.author,posts.comments,posts.comments.commenter');
 
-        $response->assertOk();
+
         $response->assertExactJson([
-            'data' => [
-                'id' => 'model-1',
-                'type' => 'test_resource_with_relations',
-                'attributes' => [
-                    'title' => 'a title',
-                ],
-                'relationships' => [
-                    'relation_a' => [
-                        'data' => [
-                            'id' => 'relation-1',
-                            'type' => 'test_resource',
-                        ]
-                    ],
-                    'relation_b' => [
-                        'data' => [
-                            [
-                                'id' => 'relation-1',
-                                'type' => 'test_resource_with_relations',
-                            ],
-                            [
-                                'id' => 'relation-2',
-                                'type' => 'test_resource_with_relations',
-                            ]
-                        ]
-                    ],
-                ]
-            ],
-            'included' => [
-                [
-                    'id' => 'relation-1',
-                    'type' => 'test_resource',
-                    'attributes' => [
-                        'title' => 'a relation'
-                    ],
-                ],
-                [
-                    'id' => 'relation-1',
-                    'type' => 'test_resource_with_relations',
-                    'attributes' => [
-                        'title' => 'a relation'
-                    ],
-                ],
-                [
-                    'id' => 'relation-2',
-                    'type' => 'test_resource_with_relations',
-                    'attributes' => [
-                        'title' => 'relation b'
-                    ],
-                ]
-            ]
+           'data' => $this->createJsonResource($author, [ 'posts' => [ $post ]]),
+           'included' => [
+               $this->createJsonResource($post, [ 'author' => $author, 'comments' => $comments ]),
+               $this->createJsonResource($author),
+               $this->createJsonResource($comments[0], [ 'commenter' => $commenter ]),
+               $this->createJsonResource($comments[1], [ 'commenter' => $authorAsCommenter ]),
+               $this->createJsonResource($commenter),
+           ]
         ]);
     }
 
-    public function testResourceWithResourceAsRelations()
+    public function testTooDeepRelatedResource()
     {
-        $base = (new TestModel([
-            'identifier' => 'model-1',
-            'title' => 'a title',
-        ]));
-        $relation = (new TestModel([
-            'identifier' => 'relation-1',
-            'title' => 'a relation'
-        ]));
-        $base->relationA()->associate($relation);
+        $account = Account::factory()->create();
 
-        Route::get('test-route', fn() => TestResourceWithResourceRelation::make($base)->response()->setStatusCode(200));
+        $post = Post::factory([
+            'author_id' => $account->id,
+        ])
+            ->has(Comment::factory()->has(Account::factory(), 'commenter'), 'comments')
+            ->has(Comment::factory()->for($account, 'commenter'), 'comments')
+            ->create();
+        $postAuthor = $post->author;
+        $comments = $post->comments;
+        $commentAuthor = $comments->first()->commenter;
+
+        Route::get('test-route', fn (Request $request) => (
+            AccountResource::make([Account::with(explode(',', $request->query()['includes']))->first(), 2])
+        ));
+        $response = $this->getJson('test-route?includes=posts,posts.author,posts.comments,posts.comments.commenter');
+
+        $response->assertExactJson([
+            'data' => $this->createJsonResource($postAuthor, [ 'posts' => [ $post ]]),
+            'included' => [
+                $this->createJsonResource($post, [ 'author' => $postAuthor, 'comments' => $comments ]),
+                $this->createJsonResource($postAuthor),
+                $this->createJsonResource($comments[0]),
+                $this->createJsonResource($comments[1]),
+            ]
+        ]);
+        $response->assertJsonMissing(['id' => $commentAuthor->identifier ]);
+    }
+
+    public function testResourceWithMetaData()
+    {
+        $account = Account::factory()
+            ->has(Post::factory()->count(10))
+            ->create();
+        Route::get('test-route', fn () => (
+            AccountResource::make(Account::first())
+        ));
         $response = $this->getJson('test-route');
 
-        $response->assertOk();
         $response->assertExactJson([
-            'data' => [
-                'id' => 'model-1',
-                'type' => 'test_resource_with_resource_relations',
-                'attributes' => [
-                    'title' => 'a title',
-                ],
-                'relationships' => [
-                    'relation_a' => [
-                        'data' => [
-                            'id' => 'relation-1',
-                            'type' => 'test_resource',
-                        ]
-                    ],
-                ]
-            ],
-            'included' => [
-                [
-                    'attributes' => [
-                        'title' => 'a relation'
-                    ],
-                    'id' => 'relation-1',
-                    'type' => 'test_resource'
-                ]
-            ]
+            'data' => $this->createJsonResource($account, meta: [ 'experienced_author' => true ]),
         ]);
     }
 
-    public function testResourceWithEmptyCollectionRelations()
+    public function testResourceWithLinkData()
     {
-        $base = TestModel::create([
-            'identifier' => 'model-1',
-            'title' => 'a title',
-        ]);
-        $base->load('relationB');
 
-        Route::get('test-route', fn() => TestResourceWithRelations::make($base)->response()->setStatusCode(200));
+        $link = 'https://some-link-to-blog.com' ;
+        $post = Post::factory([
+            'url' => $link,
+        ])->create();
+
+        Route::get('test-route', fn () => (
+            PostResource::make(Post::first())
+        ));
         $response = $this->getJson('test-route');
 
-        $response->assertOk();
         $response->assertExactJson([
-            'data' => [
-                'id' => 'model-1',
-                'type' => 'test_resource_with_relations',
-                'attributes' => [
-                    'title' => 'a title',
-                ],
-            ],
-        ]);
-    }
-
-    public function testResourceWithSubRelations()
-    {
-        $base = TestModel::create([
-            'identifier' => 'model-1',
-            'title' => 'a title',
-        ]);
-        $relation = TestModel::create([
-            'identifier' => 'relation-1',
-            'title' => 'a relation',
-            'test_model_id' => $base->id,
-        ]);
-        $subrelation = TestModel::create([
-            'identifier' => 'relation-2',
-            'title' => 'sub relation',
-            'test_model_id' => $relation->id,
-        ]);
-        $base->refresh()->load(['relationB', 'relationB.relationB']);
-
-        Route::get('test-route', fn() => TestResourceWithRelations::make($base)->response()->setStatusCode(200));
-        $response = $this->getJson('test-route');
-
-        $response->assertOk();
-        $response->assertExactJson([
-            'data' => [
-                'id' => 'model-1',
-                'type' => 'test_resource_with_relations',
-                'attributes' => [
-                    'title' => 'a title',
-                ],
-                'relationships' => [
-                    'relation_b' => [
-                        'data' => [
-                            [
-                                'id' => 'relation-1',
-                                'type' => 'test_resource_with_relations',
-                            ]
-                        ],
-                    ],
-                ],
-            ],
-            'included' => [
-                [
-                    'attributes' => [
-                        'title' => 'a relation',
-                    ],
-                    'id' => 'relation-1',
-                    'relationships' => [
-                        'relation_b' => [
-                            'data' => [
-                                [
-                                    'id' => 'relation-2',
-                                    'type' => 'test_resource_with_relations',
-                                ]
-                            ],
-                        ],
-                    ],
-                    'type' => 'test_resource_with_relations'
-                ],
-                [
-                    'id' => 'relation-2',
-                    'type' => 'test_resource_with_relations',
-                    'attributes' => [
-                        'title' => 'sub relation',
-                    ],
-                ]
-            ]
-        ]);
-    }
-
-    public function testResourceExceedResourceDepth()
-    {
-        $base = TestModel::create([
-            'identifier' => 'model-1',
-            'title' => 'a title',
-        ]);
-        $relation = TestModel::create([
-            'identifier' => 'relation-1',
-            'title' => 'a relation',
-            'test_model_id' => $base->id,
-        ]);
-        $subrelation = TestModel::create([
-            'identifier' => 'relation-2',
-            'title' => 'sub relation',
-            'test_model_id' => $relation->id,
-        ]);
-        $subsubrelation = TestModel::create([
-            'identifier' => 'relation-3',
-            'title' => 'sub sub relation',
-            'test_model_id' => $subrelation->id,
-        ]);
-        $base->refresh()->load(['relationB', 'relationB.relationB', 'relationB.relationB.relationB']);
-
-        Route::get('test-route', fn() => TestResourceWithRelations::make($base)->response()->setStatusCode(200));
-        $response = $this->getJson('test-route');
-
-        $response->assertOk();
-        $response->assertExactJson([
-            'data' => [
-                'id' => 'model-1',
-                'type' => 'test_resource_with_relations',
-                'attributes' => [
-                    'title' => 'a title',
-                ],
-                'relationships' => [
-                    'relation_b' => [
-                        'data' => [
-                            [
-                                'id' => 'relation-1',
-                                'type' => 'test_resource_with_relations',
-                            ]
-                        ],
-                    ],
-                ],
-            ],
-            'included' => [
-                [
-                    'id' => 'relation-1',
-                    'type' => 'test_resource_with_relations',
-                    'attributes' => [
-                        'title' => 'a relation',
-                    ],
-                    'relationships' => [
-                        'relation_b' => [
-                            'data' => [
-                                [
-                                    'id' => 'relation-2',
-                                    'type' => 'test_resource_with_relations',
-                                ]
-                            ],
-                        ],
-                    ],
-                ],
-                [
-                    'id' => 'relation-2',
-                    'type' => 'test_resource_with_relations',
-                    'attributes' => [
-                        'title' => 'sub relation',
-                    ],
-                ]
-            ]
-        ]);
-    }
-
-    public function testResourceEnlargeResourceDepth()
-    {
-        $base = TestModel::create([
-            'identifier' => 'model-1',
-            'title' => 'a title',
-        ]);
-        $relation = TestModel::create([
-            'identifier' => 'relation-1',
-            'title' => 'a relation',
-            'test_model_id' => $base->id,
-        ]);
-        $subrelation = TestModel::create([
-            'identifier' => 'relation-2',
-            'title' => 'sub relation',
-            'test_model_id' => $relation->id,
-        ]);
-        $subsubrelation = TestModel::create([
-            'identifier' => 'relation-3',
-            'title' => 'sub sub relation',
-            'test_model_id' => $subrelation->id,
-        ]);
-        $base->refresh()->load(['relationB', 'relationB.relationB', 'relationB.relationB.relationB']);
-
-        Route::get('test-route', fn() => TestResourceWithRelations::make([$base, 3])->response()->setStatusCode(200));
-        $response = $this->getJson('test-route');
-
-        $response->assertOk();
-        $response->assertExactJson([
-            'data' => [
-                'id' => 'model-1',
-                'type' => 'test_resource_with_relations',
-                'attributes' => [
-                    'title' => 'a title',
-                ],
-                'relationships' => [
-                    'relation_b' => [
-                        'data' => [
-                            [
-                                'id' => 'relation-1',
-                                'type' => 'test_resource_with_relations',
-                            ]
-                        ],
-                    ],
-                ],
-            ],
-            'included' => [
-                [
-                    'id' => 'relation-1',
-                    'type' => 'test_resource_with_relations',
-                    'attributes' => [
-                        'title' => 'a relation',
-                    ],
-                    'relationships' => [
-                        'relation_b' => [
-                            'data' => [
-                                [
-                                    'id' => 'relation-2',
-                                    'type' => 'test_resource_with_relations',
-                                ]
-                            ],
-                        ],
-                    ],
-                ],
-                [
-                    'id' => 'relation-2',
-                    'type' => 'test_resource_with_relations',
-                    'attributes' => [
-                        'title' => 'sub relation',
-                    ],
-                    'relationships' => [
-                        'relation_b' => [
-                            'data' => [
-                                [
-                                    'id' => 'relation-3',
-                                    'type' => 'test_resource_with_relations',
-                                ]
-                            ],
-                        ],
-                    ],
-                ],
-                [
-                    'id' => 'relation-3',
-                    'type' => 'test_resource_with_relations',
-                    'attributes' => [
-                        'title' => 'sub sub relation',
-                    ],
-                ],
-            ]
+            'data' => $this->createJsonResource($post, links: [ 'view' => [ 'href' => $link ] ]),
         ]);
     }
 
     public function testResourceSparseFieldset()
     {
-        $model = (new TestModel([
-            'identifier' => 'model-1',
-            'title' => 'a title',
-            'description' => 'the description',
-        ]));
+        $post = Post::factory()->create();
 
-        Route::get('test-route', fn() => TestResourceWithDescriptionA::make($model));
-        $response = $this->getJson('test-route?fields[test_resource_with_description_a]=description');
+        Route::get('test-route', fn () => (
+            PostResource::make(Post::first())
+        ));
+        $response = $this->getJson('test-route?fields[posts]=title');
 
-        $response->assertOk();
         $response->assertExactJson([
-            'data' => [
-                'id' => 'model-1',
-                'type' => 'test_resource_with_description_a',
-                'attributes' => [
-                    'description' => 'the description',
-                ],
-            ],
+            'data' => $this->createJsonResource($post, onlyAttributes: ['title']),
         ]);
+        $response->assertJsonMissing(['content' => $post->content]);
     }
 
     public function testResourceIncludedSparseFieldset()
     {
-        $model = (new TestModel([
-            'identifier' => 'model-1',
-            'title' => 'a title',
-            'description' => 'the description',
-        ]));
-        $relation = (new TestModel([
-            'identifier' => 'relation-1',
-            'title' => 'a relation',
-            'description' => 'related description'
-        ]));
-        $model->relationA()->associate($relation);
+        $account = Account::factory(['email' => 'bloke@example.org'])->create();
 
-        Route::get('test-route', fn() => TestResourceWithDescriptionA::make($model));
-        $response = $this->getJson('test-route?fields[test_resource_with_description_a]=description&fields[test_resource_with_description_b]=title&include=relation_a');
+        $post = Post::factory()
+            ->for($account, 'author')
+            ->create();
 
-        $response->assertOk();
+        $author = $post->author;
+
+        Route::get('test-route', fn (Request $request) => (
+            PostResource::make(Post::with($request->query()['includes'])->first())
+        ));
+        $response = $this->getJson('test-route?includes=author&fields[posts]=title&fields[accounts]=email');
+
+
         $response->assertExactJson([
-            'data' => [
-                'id' => 'model-1',
-                'type' => 'test_resource_with_description_a',
-                'attributes' => [
-                    'description' => 'the description',
-                ],
-                'relationships' => [
-                    'relation_a' => [
-                        'data' => [
-                            'id' => 'relation-1',
-                            'type' => 'test_resource_with_description_b',
-                        ]
-                    ],
-                ]
-            ],
+            'data' => $this->createJsonResource($post, ['author' => $author],  onlyAttributes: ['title']),
             'included' => [
-                [
-                    'id' => 'relation-1',
-                    'type' => 'test_resource_with_description_b',
-                    'attributes' => [
-                        'title' => 'a relation'
-                    ],
-                ]
-            ]
+                $this->createJsonResource($author, onlyAttributes: ['email'])
+            ],
         ]);
     }
+
+
+
+
 }

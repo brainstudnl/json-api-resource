@@ -57,8 +57,8 @@ class JsonApiCollectionResource extends ResourceCollection
     {
         $includes = new Collection;
         foreach ($this->collection as $singleResource) {
-            if ($singleResource->includedResources->isNotEmpty()) {
-                $includes = $includes->merge($singleResource->includedResources);
+            if ($singleResource->getIncludedResources()->isNotEmpty()) {
+                $includes = $includes->merge($singleResource->getIncludedResources());
             }
         }
 

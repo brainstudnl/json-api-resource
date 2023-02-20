@@ -2,196 +2,103 @@
 
 namespace Brainstud\JsonApi\Tests\Unit;
 
-use Brainstud\JsonApi\Tests\Models\TestModel;
-use Brainstud\JsonApi\Tests\Resources\TestCollectionResource;
+use Brainstud\JsonApi\Tests\Models\Account;
+use Brainstud\JsonApi\Tests\Models\Comment;
+use Brainstud\JsonApi\Tests\Models\Post;
+use Brainstud\JsonApi\Tests\Resources\AccountCollectionResource;
 use Brainstud\JsonApi\Tests\TestCase;
 use Illuminate\Support\Facades\Route;
 
 class JsonApiCollectionResourceTest extends TestCase
 {
-    public function testCollectionResource()
+    public function testBasicResourceCollectionResource()
     {
-        $model1 = (new TestModel([
-            'identifier' => 'model-1',
-            'title' => 'a title',
-        ]));
-        $model2 = (new TestModel([
-            'identifier' => 'model-2',
-            'title' => 'second title',
-        ]));
+        $accounts = Account::factory()->count(3)->create();
 
-        Route::get('test-route', fn() => TestCollectionResource::make([$model1, $model2]));
+        Route::get('test-route', fn() => AccountCollectionResource::make(Account::all()));
         $response = $this->getJson('test-route');
 
-        $response->assertOk();
         $response->assertExactJson([
             'data' => [
-                [
-                    'id' => 'model-1',
-                    'type' => 'test_resource_with_relations',
-                    'attributes' => [
-                        'title' => 'a title',
-                    ],
-                ],
-                [
-                    'id' => 'model-2',
-                    'type' => 'test_resource_with_relations',
-                    'attributes' => [
-                        'title' => 'second title',
-                    ],
-                ]
+                $this->createJsonResource($accounts[0]),
+                $this->createJsonResource($accounts[1]),
+                $this->createJsonResource($accounts[2]),
             ],
         ]);
     }
 
     public function testCollectionResourceWithRelations()
     {
-        $model1 = TestModel::create([
-            'identifier' => 'model-1',
-            'title' => 'a title',
-        ]);
-        $model2 = TestModel::create([
-            'identifier' => 'model-2',
-            'title' => 'second title',
-        ]);
-        $model3 = TestModel::create([
-            'identifier' => 'model-3',
-            'title' => 'third title',
-            'test_model_id' => $model2->id
-        ]);
-        $model2->load('relationB');
 
-        Route::get('test-route', fn() => TestCollectionResource::make([$model1, $model2]));
-        $response = $this->getJson('test-route');
+        $others = Account::factory()->count(3)->create();
+        $author = Account::factory()->has(Post::factory())->create();
 
-        $response->assertOk();
+        Route::get('test-route', fn() => AccountCollectionResource::make(Account::with('posts')->get()));
+        $response = $this->getJson('test-route?include=posts');
+
         $response->assertExactJson([
-            'data' => [
-                [
-                    'id' => 'model-1',
-                    'type' => 'test_resource_with_relations',
-                    'attributes' => [
-                        'title' => 'a title',
-                    ],
-                ],
-                [
-                    'id' => 'model-2',
-                    'type' => 'test_resource_with_relations',
-                    'attributes' => [
-                        'title' => 'second title',
-                    ],
-                    'relationships' => [
-                        'relation_b' => [
-                            'data' => [[
-                                'id' => 'model-3',
-                                'type' => 'test_resource_with_relations',
-                            ]]
-                        ]
-                    ]
-                ]
-            ],
+           'data' => [
+               ...$this->createJsonResource($others),
+               $this->createJsonResource($author, [ 'posts' => $author->posts ]),
+           ],
             'included' => [
-                [
-                    'id' => 'model-3',
-                    'type' => 'test_resource_with_relations',
-                    'attributes' => [
-                        'title' => 'third title',
-                    ],
-                ],
-            ],
+                $this->createJsonResource($author->posts->first())
+            ]
         ]);
     }
 
-    public function testCollectionResourceEnlargeResourceDepth()
+
+    public function testCollectionResourceEnlargeResourceDepth1()
     {
-        $base = TestModel::create([
-            'identifier' => 'model-1',
-            'title' => 'a title',
-        ]);
-        $relation = TestModel::create([
-            'identifier' => 'relation-1',
-            'title' => 'a relation',
-            'test_model_id' => $base->id,
-        ]);
-        $subrelation = TestModel::create([
-            'identifier' => 'relation-2',
-            'title' => 'sub relation',
-            'test_model_id' => $relation->id,
-        ]);
-        $subsubrelation = TestModel::create([
-            'identifier' => 'relation-3',
-            'title' => 'sub sub relation',
-            'test_model_id' => $subrelation->id,
-        ]);
-        $base->refresh()->load(['relationB', 'relationB.relationB', 'relationB.relationB.relationB']);
+        $someBloke = Account::factory()->create();
 
-        Route::get('test-route', fn() => TestCollectionResource::make([[$base, 3]]));
-        $response = $this->getJson('test-route');
+        $authorClaire = Account::factory()
+            ->has(
+                Post::factory()
+                    ->has(Comment::factory()->for($someBloke, 'commenter')->count(2))
+            )
+            ->create();
+        $postsClaire = $authorClaire->posts;
+        $postClaire = $authorClaire->posts->first();
+        Comment::factory([
+            'account_id' => $authorClaire->id,
+            'post_id' => $postClaire->id,
+        ])->create();
 
-        $response->assertOk();
+        $authorTom = Account::factory()
+            ->has(
+                Post::factory()
+                    ->has(Comment::factory()->for($authorClaire, 'commenter')->count(2))
+            )
+            ->create();
+        $postsTom = $authorTom->posts;
+        $postTom = $postsTom->first();
+        Comment::factory([
+            'account_id' => $authorTom->id,
+            'post_id' => $postsTom->first()->id,
+        ])->create();
+
+        $includes = [
+            'posts',
+            'posts.comments',
+            'posts.comments.commenter',
+        ];
+
+        Route::get('test-route', fn() => AccountCollectionResource::make([[Account::with($includes)->find(2), 3]]));
+        $response = $this->getJson('test-route?include' . implode(',', $includes));
+
         $response->assertExactJson([
             'data' => [
-                [
-                    'id' => 'model-1',
-                    'type' => 'test_resource_with_relations',
-                    'attributes' => [
-                        'title' => 'a title',
-                    ],
-                    'relationships' => [
-                        'relation_b' => [
-                            'data' => [
-                                [
-                                    'id' => 'relation-1',
-                                    'type' => 'test_resource_with_relations',
-                                ]
-                            ],
-                        ],
-                    ],
-                ]
+                $this->createJsonResource($authorClaire, [ 'posts' => $postsClaire ]),
             ],
             'included' => [
-                [
-                    'id' => 'relation-1',
-                    'type' => 'test_resource_with_relations',
-                    'attributes' => [
-                        'title' => 'a relation',
-                    ],
-                    'relationships' => [
-                        'relation_b' => [
-                            'data' => [
-                                [
-                                    'id' => 'relation-2',
-                                    'type' => 'test_resource_with_relations',
-                                ]
-                            ],
-                        ],
-                    ],
-                ],
-                [
-                    'id' => 'relation-2',
-                    'type' => 'test_resource_with_relations',
-                    'attributes' => [
-                        'title' => 'sub relation',
-                    ],
-                    'relationships' => [
-                        'relation_b' => [
-                            'data' => [
-                                [
-                                    'id' => 'relation-3',
-                                    'type' => 'test_resource_with_relations',
-                                ]
-                            ],
-                        ],
-                    ],
-                ],
-                [
-                    'id' => 'relation-3',
-                    'type' => 'test_resource_with_relations',
-                    'attributes' => [
-                        'title' => 'sub sub relation',
-                    ],
-                ],
-            ],
+                $this->createJsonResource($postClaire, [ 'comments' => $postClaire->comments ]),
+                $this->createJsonResource($postClaire->comments[0], [ 'commenter' => $postClaire->comments[0]->commenter ]),
+                $this->createJsonResource($postClaire->comments[1], [ 'commenter' => $postClaire->comments[1]->commenter ]),
+                $this->createJsonResource($postClaire->comments[2], [ 'commenter' => $postClaire->comments[2]->commenter ]),
+                $this->createJsonResource($postClaire->comments[0]->commenter),
+                $this->createJsonResource($postClaire->comments[2]->commenter),
+            ]
         ]);
     }
 }
