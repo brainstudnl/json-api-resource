@@ -70,7 +70,7 @@ class JsonApiResourceTest extends TestCase
 
         $response->assertExactJson([
             'data' => $this->createJsonResource($post, [ 'author' => $author]),
-            'included' => [$this->createJsonResource($author)],
+            'included' => [ $this->createJsonResource($author)],
         ]);
     }
 
