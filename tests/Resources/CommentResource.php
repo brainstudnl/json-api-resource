@@ -4,19 +4,22 @@ namespace Brainstud\JsonApi\Tests\Resources;
 
 use Brainstud\JsonApi\Resources\JsonApiResource;
 
-class TestResourceWithResourceRelation extends JsonApiResource
+class CommentResource extends JsonApiResource
 {
     protected function register(): array
     {
-        return [
+        $data =  [
             'id' => $this->resourceObject->identifier,
-            'type' => 'test_resource_with_resource_relations',
+            'type' => 'comments',
             'attributes' => [
-                'title' => $this->resourceObject->title,
+                'content' => $this->resourceObject->content,
             ],
             'relationships' => [
-                'relation_a' => [$this->resourceObject->relationA, TestResource::class],
+                'post' => ['post', PostResource::class],
+                'commenter' =>  ['commenter', AccountResource::class],
             ]
         ];
+
+        return $data;
     }
 }
