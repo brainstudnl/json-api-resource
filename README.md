@@ -1,5 +1,83 @@
 # JSON:API Resource for Laravel
+
 Make your Laravel API [JSON:API](https://jsonapi.org/) compliant with the `Brainstud\JsonApi` package.
+
+
+## Usage
+
+Install the package with Composer:
+
+```bash
+composer require brainstud/json-api-resource
+```
+
+After that, you can create new resources that extend the `JsonApiResource` of this package.
+
+```php
+// Post.php
+class Post extends Model {
+       protected $fillable = [
+        'title',
+        'content',
+    ];
+
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+}
+
+
+// PostResource.php
+class PostResource extends JsonApiResource {
+
+  protected function register() {
+     $data = [
+         'id' => $this->resourceObject->identifier,
+         'type' => 'posts',
+         'attributes' => [
+            'title' => $this->resourceObject->title,
+            'content' => $this->resourceObject->content,
+         ],   
+         'relationships' => ['comments', CommentCollectionResource::class]
+     ];  
+    
+     return $data; 
+  }
+}
+
+// PostCollectionResource.php
+class PostCollectionResource extends JsonApiCollectionResource {
+
+    public $collects = PostResource::class;
+
+}
+
+// PostController.php
+class PostController extends Controller {
+
+    public function index(){
+         $posts = Post::all()->load('comments');
+         return new PostCollectionResource($posts);
+    }
+
+    public function show (Post $post) {
+         return new PostResource($post->load('comments'));
+    }
+}
+```
+
+
+
+
+
+
+
+
+
+
 
 ## Example usage
 ```php
