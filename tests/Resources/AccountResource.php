@@ -16,22 +16,17 @@ class AccountResource extends JsonApiResource
             'attributes' => [
               'name' => $this->resourceObject->name,
             ],
-            'relationships' => [],
+            'relationships' => [
+                'posts' => ['posts', PostCollectionResource::class],
+                'comments' => ['comments', CommentCollectionResource::class],
+            ],
         ];
 
         if($this->resourceObject->email){
             $data['attributes']['email']  = $this->resourceObject->email;
         }
 
-        if($this->resourceObject->relationLoaded('posts')) {
-            $data['relationships']['posts'] = [$this->resourceObject->posts, PostCollectionResource::class];
-        }
-
-        if($this->resourceObject->relationLoaded('comments')) {
-            $data['relationships']['comments'] = [$this->resourceObject->comments, CommentCollectionResource::class];
-        }
-
-        if($this->resourceObject->posts->count() >= 10){
+        if($this->resourceObject->posts()->count() >= 10){
             $data['meta'] = [
                 'experienced_author' => true,
             ];

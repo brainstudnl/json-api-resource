@@ -70,7 +70,7 @@ class JsonApiResourceTest extends TestCase
 
         $response->assertExactJson([
             'data' => $this->createJsonResource($post, [ 'author' => $author]),
-            'included' => [ $this->createJsonResource($author)],
+            'included' => [$this->createJsonResource($author)],
         ]);
     }
 
@@ -188,12 +188,17 @@ class JsonApiResourceTest extends TestCase
             ->has(Post::factory()->count(10))
             ->create();
         Route::get('test-route', fn () => (
-            AccountResource::make(Account::first())
+            AccountResource::make(Account::with('posts')->first())
         ));
         $response = $this->getJson('test-route');
 
         $response->assertExactJson([
-            'data' => $this->createJsonResource($account, meta: [ 'experienced_author' => true ]),
+            'data' => $this->createJsonResource(
+                modelOrCollection: $account,
+                relationships: [ 'posts' => $account->posts ],
+                meta: [ 'experienced_author' => true ]
+            ),
+            'included' => $this->createJsonResource($account->posts)
         ]);
     }
 

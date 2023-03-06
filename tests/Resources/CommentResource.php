@@ -14,15 +14,11 @@ class CommentResource extends JsonApiResource
             'attributes' => [
                 'content' => $this->resourceObject->content,
             ],
+            'relationships' => [
+                'post' => ['post', PostResource::class],
+                'commenter' =>  ['commenter', AccountResource::class],
+            ]
         ];
-
-        if($this->resourceObject->relationLoaded('post')) {
-            $data['relationships']['post'] = [$this->resourceObject->post, PostResource::class];
-        }
-
-        if($this->resourceObject->relationLoaded('commenter')) {
-            $data['relationships']['commenter'] = [$this->resourceObject->commenter, AccountResource::class];
-        }
 
         return $data;
     }

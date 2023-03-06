@@ -323,7 +323,6 @@ abstract class JsonApiResource extends JsonResource
         }
 
         return array_filter($attributes, fn ($key) => in_array($key, $fields), ARRAY_FILTER_USE_KEY);
-
     }
 
     /**
