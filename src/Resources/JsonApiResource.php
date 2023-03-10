@@ -5,7 +5,6 @@ namespace Brainstud\JsonApi\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 
 abstract class JsonApiResource extends JsonResource
 {
@@ -288,7 +287,6 @@ abstract class JsonApiResource extends JsonResource
             $this->resourceRegistrationData,
             $second->resourceRegistrationData,
         );
-        $second->getIncludedResources()->each(fn($relation) => $this->addInclude($relation));
         return $this;
     }
 
