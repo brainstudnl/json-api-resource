@@ -14,6 +14,25 @@ abstract class JsonApiResource extends JsonResource
      */
     protected mixed $resourceObject;
 
+
+    /**
+     * Prevent specific properties from the model to be published in the resource.
+     * @var $except string[]
+     */
+    protected array $except;
+
+    /**
+     * Select specific attributes from the model of the resource.
+     * @var $only string[]
+     */
+    protected array $only;
+
+    /**
+     * Overwrite model key where the model is identified by within the resource (e.g. `identifier` or `id`).
+     * @var string $identifiedBy
+     */
+    protected string $identifiedBy;
+
     /**
      * The registered resource data
      * @var array
@@ -65,7 +84,7 @@ abstract class JsonApiResource extends JsonResource
         $this->resourceDepth =  $resourceDepth ?? 0;
         $this->resourceObject = $resource;
         $this->resourceRegistrationData = $this->register();
-        $this->resourceKey = "{$this->resourceRegistrationData['type']}.{$this->resourceRegistrationData['id']}";
+        $this->resourceKey = "{$this->getType()}.{$this->getId()}";
 
         if ($this->resourceDepth < $this->maxResourceDepth) {
             $this->mapRelationships();
@@ -82,6 +101,54 @@ abstract class JsonApiResource extends JsonResource
      */
     abstract protected function register(): array;
 
+    /**
+     * toId.
+     *
+     * When string is returned, it will be set as the JSON:API `id` property.
+     * @return string|null
+     */
+    protected function toId(): null | string {
+        return null;
+    }
+
+    /**
+     * getId.
+     *
+     * Returns the id of the resource.
+     * @return string
+     */
+    protected function getId(): string {
+        return (
+            $this->toId()
+            ?? $this->resourceRegistrationData['id']
+            ?? $this->resourceObject->{$this->identifiedBy ?? $this->resourceObject->getRouteKeyName()}
+        );
+    }
+
+    /**
+     * toType.
+     *
+     * When string is returned, it will be set as the JSON:API `type` property.
+     * @return string|null
+     */
+    protected function toType(): null | string {
+        return null;
+    }
+
+    /**
+     * getType.
+     *
+     * Returns the type of the resource.
+     * @return string
+     */
+    protected function getType(){
+        return (
+            $this->toType() ??
+            $this->resourceRegistrationData['type'] ??
+            Str::snake(Str::plural(class_basename($this->resourceObject)))
+        );
+    }
+
 
     /**
      * Build the response
@@ -95,8 +162,8 @@ abstract class JsonApiResource extends JsonResource
         }
 
         $response = [
-            'id' => $this->resourceRegistrationData['id'],
-            'type' => $this->resourceRegistrationData['type'],
+            'id' => $this->resourceObject->{$this->identifiedBy ?? $this->resourceObject->getRouteKeyName()},
+            'type' => $this->getType(),
             'attributes' => $this->getAttributes($request),
         ];
 
@@ -276,6 +343,8 @@ abstract class JsonApiResource extends JsonResource
      *
      * Merges two similar resources together.
      *
+     * TODO: Make sure this combine method works with dynamic attributes (`only`, `except`, `toAttributes`).
+     *
      * @param JsonApiResource|null $second
      * @return JsonApiResource
      */
@@ -299,6 +368,18 @@ abstract class JsonApiResource extends JsonResource
         return collect(array_values($this->included));
     }
 
+    /**
+     * toAttributes.
+     *
+     * When an array is returned, it will set the attributes of the resource to that array.
+     *
+     * @param Request $request
+     * @param $model
+     * @return array|null
+     */
+    protected function toAttributes(Request $request, $model): ?array {
+        return null;
+    }
 
     /**
      * getAttributes.
@@ -310,17 +391,46 @@ abstract class JsonApiResource extends JsonResource
      */
     private function getAttributes(Request $request)
     {
-        $attributes = $this->resourceRegistrationData['attributes'];
-        $type = $this->resourceRegistrationData['type'];
+        if(
+            array_key_exists('attributes', $this->resourceRegistrationData)
+            || $this->toAttributes($request, $this->resourceObject) !== null
+        ){
+            $attributes = array_merge(
+                $this->resourceRegistrationData['attributes'] ?? [],
+                $this->toAttributes($request, $this->resourceObject) ?? [],
+            );
+        }else{
+            $keys = $this->only ?? (
+                array_filter(
+                    $this->resourceObject->getFillable(),
+                    fn($key) => !in_array($key, ['identifier', ...($this->except ?? [])])
+                )
+            );
 
-        if (!($fieldSet = $request->query('fields'))
-            || !array_key_exists($type, $fieldSet)
-            || !($fields = explode(',', $fieldSet[$type]))
+            $attributes = array_filter(
+                $this->resourceObject->getAttributes(),
+                fn($key) => (
+                    !!$this->resourceObject->{$key}
+                    && in_array($key, $keys)
+                ),
+                ARRAY_FILTER_USE_KEY
+            );
+        }
+        $type = $this->getType();
+        if (
+            ($fieldSet = $request->query('fields'))
+            && array_key_exists($type, $fieldSet)
+            && ($fields = explode(',', $fieldSet[$type]))
         ) {
-            return $attributes;
+            $attributes = array_filter($attributes, fn($key) => in_array($key, $fields), ARRAY_FILTER_USE_KEY);
         }
 
-        return array_filter($attributes, fn ($key) => in_array($key, $fields), ARRAY_FILTER_USE_KEY);
+        return array_map(fn ($attribute) => (
+            is_callable($attribute)
+                ? $attribute($request, $this->resourceObject)
+                : $attribute
+        ), $attributes);
+
     }
 
     /**
@@ -330,8 +440,8 @@ abstract class JsonApiResource extends JsonResource
     public function toRelationshipReferenceArray(): array
     {
         return [
-            'id' => $this->resourceRegistrationData['id'],
-            'type' => $this->resourceRegistrationData['type'],
+            'id' => $this->getId(),
+            'type' => $this->getType(),
         ];
     }
 

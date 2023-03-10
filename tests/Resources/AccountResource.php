@@ -11,20 +11,11 @@ class AccountResource extends JsonApiResource
     {
 
         $data = [
-            'id' => $this->resourceObject->identifier,
-            'type' => 'accounts',
-            'attributes' => [
-              'name' => $this->resourceObject->name,
-            ],
             'relationships' => [
                 'posts' => ['posts', PostCollectionResource::class],
                 'comments' => ['comments', CommentCollectionResource::class],
             ],
         ];
-
-        if($this->resourceObject->email){
-            $data['attributes']['email']  = $this->resourceObject->email;
-        }
 
         if($this->resourceObject->posts()->count() >= 10){
             $data['meta'] = [
