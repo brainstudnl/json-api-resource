@@ -250,7 +250,6 @@ class JsonApiResourceTest extends TestCase
         ));
         $response = $this->getJson('test-route?includes=author&fields[posts]=title&fields[accounts]=email');
 
-
         $response->assertExactJson([
             'data' => $this->createJsonResource($post, ['author' => $author],  onlyAttributes: ['title']),
             'included' => [
@@ -259,7 +258,33 @@ class JsonApiResourceTest extends TestCase
         ]);
     }
 
+    public function testResourceDoubleLoadedDoesNotOverwriteButMerge()
+    {
+        $posterAccount = Account::factory()->create(['email' => 'markie@example.org']);
+        $commenterAccount = Account::factory()->create(['email' => 'commenter@example.org']);
+        $post = Post::factory()
+            ->for($posterAccount, 'author')
+            ->create();
 
+        $comment = Comment::factory()->create([
+            'post_id' => $post,
+            'content' => 'This is the test comment.',
+            'account_id' => $commenterAccount,
+        ]);
 
+        Route::get('test-route', fn (Request $request) => (
+            PostResource::make([Post::with(explode(',', $request->query()['includes']))->first(), 3])
+        ));
 
+        $response = $this->getJson('test-route?includes=comments.commenter.comments');
+
+        $response->assertStatus(200);
+        $response->assertExactJson([
+            'data' => $this->createJsonResource($post, [ 'comments' => [$comment] ]),
+            'included' => [
+                $this->createJsonResource($comment, [ 'commenter' => $commenterAccount ]),
+                $this->createJsonResource($commenterAccount, [ 'comments' => [$comment] ]),
+            ]
+        ]);
+    }
 }
