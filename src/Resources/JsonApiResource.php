@@ -287,6 +287,12 @@ abstract class JsonApiResource extends JsonResource
             $this->resourceRegistrationData,
             $second->resourceRegistrationData,
         );
+
+        $this->resourceRelationshipReferences = array_replace_recursive(
+            $this->resourceRelationshipReferences,
+            $second->resourceRelationshipReferences,
+        );
+
         return $this;
     }
 
@@ -308,7 +314,7 @@ abstract class JsonApiResource extends JsonResource
      * @param Request $request
      * @return mixed
      */
-    private function getAttributes(Request $request)
+    private function getAttributes(Request $request): array
     {
         $attributes = $this->resourceRegistrationData['attributes'];
         $type = $this->resourceRegistrationData['type'];
