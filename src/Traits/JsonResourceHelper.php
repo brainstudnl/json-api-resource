@@ -28,14 +28,19 @@ trait JsonResourceHelper
         array            $onlyAttributes = [],
         bool             $isReferenceObject = false,
     ): array {
-
         $type ??= ($modelOrCollection instanceof Collection)
             ? Str::snake(Str::plural(class_basename($modelOrCollection[0])))
             : Str::snake(Str::plural(class_basename($modelOrCollection)));
 
-        if( $modelOrCollection instanceof Collection ) {
+        if ($modelOrCollection instanceof Collection) {
             return $modelOrCollection->map(fn ($model) => (
-            $this->createJsonResource($model, $relationships, type: $type, isReferenceObject: $isReferenceObject)
+            $this->createJsonResource(
+                $model,
+                $relationships,
+                type: $type,
+                exceptAttributes: $exceptAttributes,
+                isReferenceObject: $isReferenceObject,
+            )
             ))->toArray();
         } elseif ($isReferenceObject) {
             $data = [
@@ -49,10 +54,9 @@ trait JsonResourceHelper
                 'type' => $type,
                 'attributes' => (
                 array_filter(
-                    $modelOrCollection->getAttributes(),
-                    fn($key) => (
-                        !!$modelOrCollection->{$key}
-                        && in_array($key, $fillableAttributes)
+                    $this->getAllAttributes($modelOrCollection),
+                    fn ($key) => (
+                        in_array($key, $fillableAttributes)
                         && (empty($onlyAttributes) || in_array($key, $onlyAttributes))
                         && !in_array($key, ['identifier', ...$exceptAttributes])
                     ),
@@ -62,32 +66,56 @@ trait JsonResourceHelper
             ];
         }
 
-        if(!$isReferenceObject && $relationships) {
+        if (!$isReferenceObject && $relationships) {
             $data['relationships'] = collect(array_keys($relationships))->reduce(function ($rels, $relationKey) use ($relationships) {
                 $relation = $relationships[$relationKey];
-                if ($relation instanceof Model){
+                if ($relation instanceof Model) {
                     $rels[$relationKey] = [
-                        'data' => $this->createJsonResource($relation, isReferenceObject: true)
+                        'data' => $this->createJsonResource($relation, isReferenceObject: true),
                     ];
-                }else{
+                } else {
                     $rels[$relationKey] = [
                         'data' => collect($relation)->map(fn ($relatedModel) => (
                         $this->createJsonResource($relatedModel, isReferenceObject: true)
                         )),
                     ];
                 }
+
                 return $rels;
             }, []);
         }
 
-        if($meta){
+        if ($meta) {
             $data['meta'] = $meta;
         }
 
-        if($links){
+        if ($links) {
             $data['links'] = $links;
         }
 
         return $data;
+    }
+
+    /**
+     * By default, laravel does not add columns where the value is null
+     * to the retrieved model. Therefore, we combine the received and
+     * fillable fields on the model. If a field is fillable, but not
+     * on the given model, it adds it to the attributes array with
+     * a value of null.
+     *
+     */
+    private function getAllAttributes(Model $model): array
+    {
+        $columns = $model->getFillable();
+
+        $attributes = $model->getAttributes();
+
+        foreach ($columns as $column) {
+            if (!array_key_exists($column, $attributes)) {
+                $attributes[$column] = null;
+            }
+        }
+
+        return $attributes;
     }
 }
