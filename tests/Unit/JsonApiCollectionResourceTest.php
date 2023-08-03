@@ -20,9 +20,9 @@ class JsonApiCollectionResourceTest extends TestCase
 
         $response->assertExactJson([
             'data' => [
-                $this->createJsonResource($accounts[0]),
-                $this->createJsonResource($accounts[1]),
-                $this->createJsonResource($accounts[2]),
+                $this->createJsonResource($accounts[0], exceptAttributes: ['email']),
+                $this->createJsonResource($accounts[1], exceptAttributes: ['email']),
+                $this->createJsonResource($accounts[2], exceptAttributes: ['email']),
             ],
         ]);
     }
@@ -38,8 +38,8 @@ class JsonApiCollectionResourceTest extends TestCase
 
         $response->assertExactJson([
            'data' => [
-               ...$this->createJsonResource($others),
-               $this->createJsonResource($author, [ 'posts' => $author->posts ]),
+               ...$this->createJsonResource($others, exceptAttributes: ['email']),
+               $this->createJsonResource($author, [ 'posts' => $author->posts ], exceptAttributes: ['email']),
            ],
             'included' => [
                 $this->createJsonResource($author->posts->first())
@@ -89,15 +89,15 @@ class JsonApiCollectionResourceTest extends TestCase
 
         $response->assertExactJson([
             'data' => [
-                $this->createJsonResource($authorClaire, [ 'posts' => $postsClaire ]),
+                $this->createJsonResource($authorClaire, [ 'posts' => $postsClaire ], exceptAttributes: ['email']),
             ],
             'included' => [
                 $this->createJsonResource($postClaire, [ 'comments' => $postClaire->comments ]),
                 $this->createJsonResource($postClaire->comments[0], [ 'commenter' => $postClaire->comments[0]->commenter ]),
                 $this->createJsonResource($postClaire->comments[1], [ 'commenter' => $postClaire->comments[1]->commenter ]),
                 $this->createJsonResource($postClaire->comments[2], [ 'commenter' => $postClaire->comments[2]->commenter ]),
-                $this->createJsonResource($postClaire->comments[0]->commenter),
-                $this->createJsonResource($postClaire->comments[2]->commenter),
+                $this->createJsonResource($postClaire->comments[0]->commenter, exceptAttributes: ['email']),
+                $this->createJsonResource($postClaire->comments[2]->commenter, exceptAttributes: ['email']),
             ]
         ]);
     }
