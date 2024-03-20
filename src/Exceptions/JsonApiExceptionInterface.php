@@ -2,6 +2,8 @@
 
 namespace Brainstud\JsonApi\Exceptions;
 
+use Throwable;
+
 /**
  * JsonApiExceptionInterface
  * 
@@ -9,7 +11,8 @@ namespace Brainstud\JsonApi\Exceptions;
  * 
  * @package Brainstud\JsonApi\Exceptions
  */
-interface JsonApiExceptionInterface 
+interface JsonApiExceptionInterface extends Throwable
 {
     public function getTitle(): string;
+    public function getStatusCode(): int;
 }

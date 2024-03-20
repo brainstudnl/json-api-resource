@@ -19,10 +19,10 @@ trait JsonErrorResponseOnFailedValidation
         $errors = $validator->errors()->messages();
         foreach ($errors as $key => $error) {
             $defaultErrors[] = new DefaultError(
-                'VALIDATION_ERROR',
-                'Validation error',
-                $error[0],
-                ['pointer' => $key]
+                code: 'VALIDATION_ERROR',
+                title: 'Validation error',
+                detail: $error[0],
+                source: ['pointer' => $key]
             );
         }
 

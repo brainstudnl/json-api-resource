@@ -3,19 +3,12 @@
 namespace Brainstud\JsonApi\Handlers;
 
 use Brainstud\JsonApi\Exceptions\JsonApiExceptionInterface;
-use Brainstud\JsonApi\Responses\Errors\ForbiddenError;
-use Brainstud\JsonApi\Responses\Errors\InternalServerError;
-use Brainstud\JsonApi\Responses\Errors\MethodNotAllowedError;
-use Brainstud\JsonApi\Responses\Errors\NotFoundError;
-use Brainstud\JsonApi\Responses\Errors\UnauthorizedError;
-use Brainstud\JsonApi\Responses\Errors\UnprocessableEntityError;
-use Exception;
+use Brainstud\JsonApi\Responses\ErrorResponse;
+use Brainstud\JsonApi\Responses\Errors\DefaultError;
+use Error;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -29,40 +22,20 @@ use Throwable;
  */
 class JsonApiExceptionHandler extends ExceptionHandler
 {
-    public function render($request, Throwable $exception)
+    public function register(): void
     {
-        list($title, $detail) = $this->parseException($exception);
+        $this->renderable(function (JsonApiExceptionInterface $exception) {
+            list($title, $detail) = $this->parseException($exception);
 
-        switch ($exception) {
-            // Fall through to NotFoundError
-            case $exception instanceof ModelNotFoundException:
-            case $exception instanceof NotFoundHttpException:
-                return (new NotFoundError($title, $detail))->response();
+            return ErrorResponse::make(new DefaultError('JSON_API_ERROR', $title, $detail, httpStatusCode: $exception->getStatusCode()));
+        });
 
-            case $exception instanceof AuthenticationException:
-                return (new UnauthorizedError($title, $detail))->response();
+        $this->renderable(function (NotFoundHttpException|AuthenticationException|MethodNotAllowedHttpException|AuthorizationException|UnprocessableEntityHttpException|Throwable $exception) {
+            list($title, $detail) = $this->parseException($exception);
+            $code = method_exists($exception, 'getStatusCode') ? $exception->getStatusCode() : 500;
 
-            case $exception instanceof MethodNotAllowedHttpException:
-                return (new MethodNotAllowedError($title, $detail))->response();
-
-            // Fall through for AuthorizationException to ForbiddenError
-            case $exception instanceof AuthorizationException:
-            case $exception instanceof AccessDeniedHttpException:
-                return (new ForbiddenError($title, $detail))->response();
-
-            case $exception instanceof UnprocessableEntityHttpException:
-                return (new UnprocessableEntityError($title, $detail))->response();
-
-            // Let all other HttpExceptions fall through as is. (validation errors, errors from packages, ...)
-            case $exception instanceof HttpException: 
-            case $exception instanceof ValidationException:
-                break;
-
-            case $exception instanceof Exception:
-                return (new InternalServerError($title, $detail))->response();
-        }
-
-        return parent::render($request, $exception);
+            return ErrorResponse::make(new DefaultError('JSON_API_ERROR', $title, $detail, httpStatusCode: $code));
+        });
     }
 
     /**
@@ -71,17 +44,44 @@ class JsonApiExceptionHandler extends ExceptionHandler
      * Parse the given exception to a title and message.
      * Returns a tuple-like array [title, detail].
      *  
-     * @return array<?string>
+     * @return array<string>
      */
     private function parseException(Throwable $exception): array
     {
         $title = ($exception instanceof JsonApiExceptionInterface)
             ? $exception->getTitle()
-            : null;
+            : $this->getExceptionTitle($exception);
 
         $message = $exception->getMessage();
-        $detail = empty($message) ? null : $message;
+
+        $detail = empty($message) 
+            ? $this->getExceptionMessage($exception) 
+            : $message;
 
         return [$title, $detail];
+    }
+
+    private function getExceptionTitle(Throwable $exception): string 
+    {
+        return match (true) {
+            $exception instanceof NotFoundHttpException => "Not Found",
+            $exception instanceof AuthenticationException => "Unauthorized",
+            $exception instanceof MethodNotAllowedHttpException => "Method Not Allowed",
+            $exception instanceof AuthorizationException => "Forbidden",
+            $exception instanceof UnprocessableEntityHttpException => "Unprocessable Entity",
+            $exception instanceof Throwable => "Internal Server Error",
+        };
+    }
+
+    private function getExceptionMessage(Throwable $exception): string
+    {
+        return match (true) {
+            $exception instanceof NotFoundHttpException => "The requested resource could not be found.",
+            $exception instanceof AuthenticationException => "The requested requires authentication.",
+            $exception instanceof MethodNotAllowedHttpException => "Method Not Allowed",
+            $exception instanceof AuthorizationException => "This action is unauthorized.",
+            $exception instanceof UnprocessableEntityHttpException => "The request can't be processed.",
+            $exception instanceof Throwable => "",
+        };
     }
 }

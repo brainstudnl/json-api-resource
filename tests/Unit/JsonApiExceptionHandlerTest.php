@@ -74,8 +74,7 @@ class JsonApiExceptionHandlerTest extends TestCase
 
         $this->assertEquals("500", $code);
         $this->assertEquals('Internal Server Error', $title);
-        /** InternalServerError has no detail if no message is given to the exception. */
-        $this->assertNull($detail);
+        $this->assertEquals('', $detail);
     }
     
     /**
