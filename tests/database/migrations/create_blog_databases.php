@@ -17,14 +17,13 @@ return new class extends Migration
             $table->timestamps();
         });
 
-
         Schema::create('posts', function (Blueprint $table): void {
             $table->id();
             $table->string('identifier');
             $table->string('title');
             $table->string('url')->nullable();
             $table->string('content')->nullable();
-            $table->foreignId('author_id' )
+            $table->foreignId('author_id')
                 ->references('id')
                 ->on('accounts')
                 ->onDelete('cascade');
@@ -35,12 +34,12 @@ return new class extends Migration
             $table->id();
             $table->string('identifier');
             $table->string('content');
-            $table->foreignId('account_id' )
+            $table->foreignId('account_id')
                 ->references('id')
                 ->on('accounts')
                 ->onDelete('cascade');
 
-            $table->foreignId('post_id' )
+            $table->foreignId('post_id')
                 ->references('id')
                 ->on('posts')
                 ->onDelete('cascade');
@@ -54,5 +53,4 @@ return new class extends Migration
         Schema::dropIfExists('posts');
         Schema::dropIfExists('comments');
     }
-
 };

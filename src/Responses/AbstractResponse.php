@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Brainstud\JsonApi\Responses;
 
 use Illuminate\Http\JsonResponse;
@@ -8,7 +7,6 @@ use Illuminate\Http\JsonResponse;
 /**
  * Class AbstractResponse
  * Used to implement json responses
- * @package Brainstud\JsonApi\Responses
  */
 abstract class AbstractResponse
 {
@@ -32,15 +30,14 @@ abstract class AbstractResponse
 
     /**
      * Create and return a JSON response with the given data and status code
-     * @param mixed $contents The contents for the response
-     * @param int $httpStatusCode The HTTP status code
-     * @return JsonResponse
+     *
+     * @param  mixed  $contents  The contents for the response
+     * @param  int  $httpStatusCode  The HTTP status code
      */
     abstract public static function make($contents, int $httpStatusCode): JsonResponse;
 
     /**
      * Create and return a JSON response
-     * @return JsonResponse
      */
     protected function makeResponse(): JsonResponse
     {

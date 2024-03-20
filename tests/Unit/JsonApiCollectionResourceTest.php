@@ -15,7 +15,7 @@ class JsonApiCollectionResourceTest extends TestCase
     {
         $accounts = Account::factory()->count(3)->create();
 
-        Route::get('test-route', fn() => AccountCollectionResource::make(Account::all()));
+        Route::get('test-route', fn () => AccountCollectionResource::make(Account::all()));
         $response = $this->getJson('test-route');
 
         $response->assertExactJson([
@@ -33,20 +33,19 @@ class JsonApiCollectionResourceTest extends TestCase
         $others = Account::factory()->count(3)->create();
         $author = Account::factory()->has(Post::factory())->create();
 
-        Route::get('test-route', fn() => AccountCollectionResource::make(Account::with('posts')->get()));
+        Route::get('test-route', fn () => AccountCollectionResource::make(Account::with('posts')->get()));
         $response = $this->getJson('test-route?include=posts');
 
         $response->assertExactJson([
-           'data' => [
-               ...$this->createJsonResource($others),
-               $this->createJsonResource($author, [ 'posts' => $author->posts ]),
-           ],
+            'data' => [
+                ...$this->createJsonResource($others),
+                $this->createJsonResource($author, ['posts' => $author->posts]),
+            ],
             'included' => [
-                $this->createJsonResource($author->posts->first())
-            ]
+                $this->createJsonResource($author->posts->first()),
+            ],
         ]);
     }
-
 
     public function testCollectionResourceEnlargeResourceDepth1()
     {
@@ -84,21 +83,21 @@ class JsonApiCollectionResourceTest extends TestCase
             'posts.comments.commenter',
         ];
 
-        Route::get('test-route', fn() => AccountCollectionResource::make([[Account::with($includes)->find(2), 3]]));
-        $response = $this->getJson('test-route?include' . implode(',', $includes));
+        Route::get('test-route', fn () => AccountCollectionResource::make([[Account::with($includes)->find(2), 3]]));
+        $response = $this->getJson('test-route?include'.implode(',', $includes));
 
         $response->assertExactJson([
             'data' => [
-                $this->createJsonResource($authorClaire, [ 'posts' => $postsClaire ]),
+                $this->createJsonResource($authorClaire, ['posts' => $postsClaire]),
             ],
             'included' => [
-                $this->createJsonResource($postClaire, [ 'comments' => $postClaire->comments ]),
-                $this->createJsonResource($postClaire->comments[0], [ 'commenter' => $postClaire->comments[0]->commenter ]),
-                $this->createJsonResource($postClaire->comments[1], [ 'commenter' => $postClaire->comments[1]->commenter ]),
-                $this->createJsonResource($postClaire->comments[2], [ 'commenter' => $postClaire->comments[2]->commenter ]),
+                $this->createJsonResource($postClaire, ['comments' => $postClaire->comments]),
+                $this->createJsonResource($postClaire->comments[0], ['commenter' => $postClaire->comments[0]->commenter]),
+                $this->createJsonResource($postClaire->comments[1], ['commenter' => $postClaire->comments[1]->commenter]),
+                $this->createJsonResource($postClaire->comments[2], ['commenter' => $postClaire->comments[2]->commenter]),
                 $this->createJsonResource($postClaire->comments[0]->commenter),
                 $this->createJsonResource($postClaire->comments[2]->commenter),
-            ]
+            ],
         ]);
     }
 }

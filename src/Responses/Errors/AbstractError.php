@@ -1,10 +1,9 @@
 <?php
 
-
 namespace Brainstud\JsonApi\Responses\Errors;
 
-use Illuminate\Http\JsonResponse;
 use Brainstud\JsonApi\Responses\ErrorResponse;
+use Illuminate\Http\JsonResponse;
 
 abstract class AbstractError
 {
@@ -25,18 +24,18 @@ abstract class AbstractError
 
     /**
      * Set the status code
-     * @param int $status
+     *
      * @return $this
      */
     public function setStatusCode(int $status): self
     {
         $this->status = $status;
+
         return $this;
     }
 
     /**
      * Convert the error to an object
-     * @return object
      */
     public function toObject(): object
     {
@@ -45,13 +44,12 @@ abstract class AbstractError
             'status' => (string) $this->status,
             'source' => ! empty($this->source) ? (object) $this->source : null,
             'title' => $this->title,
-            'detail' => $this->detail
+            'detail' => $this->detail,
         ]);
     }
 
     /**
      * Return an ErrorResponse
-     * @return JsonResponse
      */
     public function response(): JsonResponse
     {

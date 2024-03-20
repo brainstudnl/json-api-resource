@@ -1,7 +1,6 @@
 <?php
+
 namespace Brainstud\JsonApi\Tests\Models;
-
-
 
 trait HasIdentifier
 {
