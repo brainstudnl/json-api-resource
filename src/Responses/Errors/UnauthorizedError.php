@@ -8,7 +8,7 @@ namespace Brainstud\JsonApi\Responses\Errors;
  */
 class UnauthorizedError extends AbstractError
 {
-    public function __construct()
+    public function __construct(?string $title = null, ?string $detail = null)
     {
         $this->status = 401;
         $this->title = 'Unauthorized';

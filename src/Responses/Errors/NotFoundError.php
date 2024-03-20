@@ -8,7 +8,7 @@ namespace Brainstud\JsonApi\Responses\Errors;
  */
 class NotFoundError extends AbstractError
 {
-    public function __construct()
+    public function __construct(?string $title = null, ?string $detail = null)
     {
         $this->status = 404;
         $this->title = 'Not Found';

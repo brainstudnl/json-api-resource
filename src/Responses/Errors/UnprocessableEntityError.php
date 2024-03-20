@@ -8,7 +8,7 @@ namespace Brainstud\JsonApi\Responses\Errors;
  */
 class UnprocessableEntityError extends AbstractError
 {
-    public function __construct()
+    public function __construct(?string $title = null, ?string $detail = null)
     {
         $this->status = 422;
         $this->title = 'Unprocessable Entity';

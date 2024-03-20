@@ -8,7 +8,7 @@ namespace Brainstud\JsonApi\Responses\Errors;
  */
 class MethodNotAllowedError extends AbstractError
 {
-    public function __construct()
+    public function __construct(?string $title = null, ?string $detail = null)
     {
         $requestMethod = strtoupper(request()->method());
         $this->status = 405;
