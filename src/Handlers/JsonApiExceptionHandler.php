@@ -2,6 +2,7 @@
 
 namespace Brainstud\JsonApi\Handlers;
 
+use Brainstud\JsonApi\Exceptions\JsonApiExceptionInterface;
 use Brainstud\JsonApi\Responses\Errors\ForbiddenError;
 use Brainstud\JsonApi\Responses\Errors\InternalServerError;
 use Brainstud\JsonApi\Responses\Errors\MethodNotAllowedError;
@@ -30,33 +31,57 @@ class JsonApiExceptionHandler extends ExceptionHandler
 {
     public function render($request, Throwable $exception)
     {
+        list($title, $detail) = $this->parseException($exception);
+
         switch ($exception) {
+            // Fall through to NotFoundError
             case $exception instanceof ModelNotFoundException:
-                // Fall through to NotFoundError
             case $exception instanceof NotFoundHttpException:
-                return (new NotFoundError)->response();
+                return (new NotFoundError($title, $detail))->response();
 
             case $exception instanceof AuthenticationException:
-                return (new UnauthorizedError)->response();
+                return (new UnauthorizedError($title, $detail))->response();
 
             case $exception instanceof MethodNotAllowedHttpException:
-                return (new MethodNotAllowedError)->response();
+                return (new MethodNotAllowedError($title, $detail))->response();
 
-            case $exception instanceof AuthorizationException: // Fall through to ForbiddenError
+            // Fall through for AuthorizationException to ForbiddenError
+            case $exception instanceof AuthorizationException:
             case $exception instanceof AccessDeniedHttpException:
-                return (new ForbiddenError)->response();
+                return (new ForbiddenError($title, $detail))->response();
 
             case $exception instanceof UnprocessableEntityHttpException:
-                return (new UnprocessableEntityError)->response();
+                return (new UnprocessableEntityError($title, $detail))->response();
 
-            case $exception instanceof HttpException: // Let all other HttpExceptions fall through as is. (validation errors, errors from packages, ...)
+            // Let all other HttpExceptions fall through as is. (validation errors, errors from packages, ...)
+            case $exception instanceof HttpException: 
             case $exception instanceof ValidationException:
                 break;
 
             case $exception instanceof Exception:
-                return (new InternalServerError)->response();
+                return (new InternalServerError($title, $detail))->response();
         }
 
         return parent::render($request, $exception);
+    }
+
+    /**
+     * ParseException
+     * 
+     * Parse the given exception to a title and message.
+     * Returns a tuple-like array [title, detail].
+     *  
+     * @return array<?string>
+     */
+    private function parseException(Throwable $exception): array
+    {
+        $title = ($exception instanceof JsonApiExceptionInterface)
+            ? $exception->getTitle()
+            : null;
+
+        $message = $exception->getMessage();
+        $detail = empty($message) ? null : $message;
+
+        return [$title, $detail];
     }
 }
