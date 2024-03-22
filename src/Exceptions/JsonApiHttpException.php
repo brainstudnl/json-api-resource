@@ -8,7 +8,7 @@ class JsonApiHttpException extends HttpException implements JsonApiExceptionInte
 {
     protected string $title = "Json API Error";
     /** The name of the error as used in the application. */
-    protected ?string $errorName;
+    public ?string $errorName;
 
     public function __construct(string $title, int $statusCode, string $message = '', ?\Throwable $previous = null, array $headers = [], int $code = 0){
         $this->title = $title;
@@ -34,4 +34,3 @@ class JsonApiHttpException extends HttpException implements JsonApiExceptionInte
         return $this;
     }
 }
-

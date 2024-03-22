@@ -2,18 +2,19 @@
 
 namespace Brainstud\JsonApi\Handlers;
 
+use Brainstud\JsonApi\Exceptions\BadRequestJsonApiException;
 use Brainstud\JsonApi\Exceptions\JsonApiExceptionInterface;
+use Brainstud\JsonApi\Exceptions\NotFoundJsonApiException;
 use Brainstud\JsonApi\Responses\ErrorResponse;
 use Brainstud\JsonApi\Responses\Errors\DefaultError;
-use Error;
-use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Eloquent\RelationNotFoundException;
+use Illuminate\Database\LazyLoadingViolationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+use Illuminate\Validation\ValidationException;
+use RuntimeException;
 use Throwable;
+
 
 /**
  * Class JsonApiExceptionHandler
@@ -24,64 +25,97 @@ class JsonApiExceptionHandler extends ExceptionHandler
 {
     public function register(): void
     {
-        $this->renderable(function (JsonApiExceptionInterface $exception) {
-            list($title, $detail) = $this->parseException($exception);
-
-            return ErrorResponse::make(new DefaultError('JSON_API_ERROR', $title, $detail, httpStatusCode: $exception->getStatusCode()));
+        $this->map(function (ModelNotFoundException|RelationNotFoundException $exception) {
+            $title = "{$this->getModelForException($exception)} Not Found";
+            return new NotFoundJsonApiException(
+                $title,
+                $exception->getMessage(),
+                $exception->getPrevious(),
+                $exception->getCode(),
+            );
         });
 
-        $this->renderable(function (NotFoundHttpException|AuthenticationException|MethodNotAllowedHttpException|AuthorizationException|UnprocessableEntityHttpException|Throwable $exception) {
-            list($title, $detail) = $this->parseException($exception);
-            $code = method_exists($exception, 'getStatusCode') ? $exception->getStatusCode() : 500;
+        $this->map(function (LazyLoadingViolationException $exception) {
+            return (new BadRequestJsonApiException(
+                "Lazy Loading Violation",
+                $exception->getMessage(),
+                $exception->getPrevious(),
+                $exception->getCode(),
+            ))->withErrorName("LAZY_LOADING_VIOLATION");
+        });
 
-            return ErrorResponse::make(new DefaultError('JSON_API_ERROR', $title, $detail, httpStatusCode: $code));
+        $this->renderable(function (JsonApiExceptionInterface $exception) {
+            return ErrorResponse::make([new DefaultError(
+                (isset($exception->errorName) ? $exception->errorName : ''),
+                $exception->getTitle(), 
+                $exception->getMessage(),
+                $exception,
+                $exception->getStatusCode(),
+                )], $exception->getStatusCode());
+        });
+
+        $this->renderable(function (ValidationException $validationException) {
+            $defaultErrors = collect($validationException->validator->errors()->messages())
+                ->map(function ($value, $key) {
+                    return new DefaultError(
+                        'VALIDATION_ERROR',
+                        'Validation error',
+                        $value[0],
+                        ['pointer' => $key]
+                    );
+                })->toArray();
+            return ErrorResponse::make($defaultErrors, 422);
         });
     }
 
     /**
-     * ParseException
-     * 
-     * Parse the given exception to a title and message.
-     * Returns a tuple-like array [title, detail].
-     *  
-     * @return array<string>
+     * Prepare a JSON response for the given exception.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Throwable  $e
+     * @return \Illuminate\Http\JsonResponse
      */
-    private function parseException(Throwable $exception): array
+    protected function prepareJsonResponse($request, Throwable $e)
     {
-        $title = ($exception instanceof JsonApiExceptionInterface)
-            ? $exception->getTitle()
-            : $this->getExceptionTitle($exception);
-
-        $message = $exception->getMessage();
-
-        $detail = empty($message) 
-            ? $this->getExceptionMessage($exception) 
-            : $message;
-
-        return [$title, $detail];
+        return ErrorResponse::make([
+            new DefaultError(
+                'UNKNOWN_ERROR',
+                $this->defaultIfEmpty($e->getMessage(), "Unknown Error"),
+                $e->getMessage(),
+                $e,
+                $this->isHttpException($e) ? $e->getStatusCode() : 500,
+            )
+        ], $this->isHttpException($e) ? $e->getStatusCode() : 500);
     }
 
-    private function getExceptionTitle(Throwable $exception): string 
+
+    public function map($from, $to = null)
     {
-        return match (true) {
-            $exception instanceof NotFoundHttpException => "Not Found",
-            $exception instanceof AuthenticationException => "Unauthorized",
-            $exception instanceof MethodNotAllowedHttpException => "Method Not Allowed",
-            $exception instanceof AuthorizationException => "Forbidden",
-            $exception instanceof UnprocessableEntityHttpException => "Unprocessable Entity",
-            $exception instanceof Throwable => "Internal Server Error",
+        try {
+            parent::map($from, $to);
+        } catch (RuntimeException) {
+            if (is_callable($from) && is_null($to)) {
+                $from = $this->firstClosureParameterTypes($to = $from);
+            }
+
+            if (!$to instanceof \Closure) {
+                throw new \InvalidArgumentException('Invalid exception mapping.');
+            }
+
+            array_map(fn ($f) => parent::map($f, $to), $from);
+        }
+    }
+
+    private function getModelForException(ModelNotFoundException|RelationNotFoundException|LazyLoadingViolationException $exception): string
+    {
+        return match ($exception::class) {
+            ModelNotFoundException::class => $exception->getModel(),
+            default => $exception->model,
         };
     }
 
-    private function getExceptionMessage(Throwable $exception): string
+    private function defaultIfEmpty(string $s, string $default): string 
     {
-        return match (true) {
-            $exception instanceof NotFoundHttpException => "The requested resource could not be found.",
-            $exception instanceof AuthenticationException => "The requested requires authentication.",
-            $exception instanceof MethodNotAllowedHttpException => "Method Not Allowed",
-            $exception instanceof AuthorizationException => "This action is unauthorized.",
-            $exception instanceof UnprocessableEntityHttpException => "The request can't be processed.",
-            $exception instanceof Throwable => "",
-        };
+        return empty($s) ? $default : $s;
     }
 }

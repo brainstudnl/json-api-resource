@@ -2,11 +2,19 @@
 
 namespace Brainstud\JsonApi\Tests\Unit;
 
+use Brainstud\JsonApi\Exceptions\JsonApiHttpException;
+use Brainstud\JsonApi\Exceptions\PaymentRequiredJsonApiException;
 use Brainstud\JsonApi\Handlers\JsonApiExceptionHandler;
 use Brainstud\JsonApi\Tests\Models\TestNotFoundException;
 use Brainstud\JsonApi\Tests\TestCase;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Container\Container;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Factory;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class JsonApiExceptionHandlerTest extends TestCase 
@@ -21,60 +29,88 @@ class JsonApiExceptionHandlerTest extends TestCase
         $this->handler = new JsonApiExceptionHandler($this->container);
     }
 
-    public function testNoAbstractImplementationUsesStdTitleAndDetail(): void
+    private function makeJsonRequest()
     {
-        $request = $this->get('/');
-        $exception = new NotFoundHttpException();
-
-        $response = $this->handler->render($request, $exception);
-
-        list($code, $title, $detail) = $this->parseErrorResponse($response);
-        
-        $this->assertEquals("404", $code);
-        $this->assertEquals("Not Found", $title);
-        $this->assertEquals("The requested resource could not be found.", $detail);
+        return Request::create('/', server: ["HTTP_ACCEPT" => "application/json"]);
     }
 
-    public function testAbstractImplemetation() 
+    public function testJsonApiHttpException()
     {
-        $request = $this->get('/');
-        $exception = new TestNotFoundException('With a custom message');
+        $request = $this->makeJsonRequest();
+        $exception = new JsonApiHttpException(
+            "title",
+            400,
+            "message"
+        );
 
         $response = $this->handler->render($request, $exception);
 
-        list($code, $title, $detail) = $this->parseErrorResponse($response);
+        $errorContent = $this->parseErrorResponse($response)[0];
 
-        $this->assertEquals("404", $code);
-        $this->assertEquals($exception->getTitle(), $title);
-        $this->assertEquals($exception->getMessage(), $detail);
+        $this->assertEquals(400, $response->getStatusCode());
+        $this->assertEquals('title', $errorContent->title);
+        $this->assertEquals('message', $errorContent->detail);
     }
 
-    public function testEmptyMessageUsesBaseMessage()
+    public function testJsonApiHttpExceptionImplementationWithDefaults()
     {
-        $request = $this->get('/');
-        $exception = new TestNotFoundException();
+        $request = $this->makeJsonRequest();
+        $exception = new PaymentRequiredJsonApiException();
 
         $response = $this->handler->render($request, $exception);
 
-        list($code, $title, $detail) = $this->parseErrorResponse($response);
+        $errorContent = $this->parseErrorResponse($response)[0];
 
-        $this->assertEquals("404", $code);
-        $this->assertEquals($exception->getTitle(), $title);
-        $this->assertEquals("The requested resource could not be found.", $detail);
+        $this->assertEquals(402, $response->getStatusCode());
+        $this->assertEquals("A payment is required to access the resource.", $errorContent->detail);
+        $this->assertEquals("Payment Required", $errorContent->title);
+    }
+
+    public function testModelNotFoundException()
+    {
+        $request = $this->makeJsonRequest();
+        $exception = (new ModelNotFoundException())->setModel("TestModel");
+
+        $response = $this->handler->render($request, $exception);
+
+        $errorContent = $this->parseErrorResponse($response)[0];
+
+        $this->assertEquals(404, $response->getStatusCode());
+        $this->assertEquals("No query results for model [TestModel].", $errorContent->detail);
+        $this->assertEquals("TestModel Not Found", $errorContent->title);
     }
 
     public function testGenericExceptionResultsInInternalServerError()
     {
-        $request = $this->get('/');
-        $exception = new \Exception();
+        $request = $this->makeJsonRequest();
+        $exception = new \Exception("An error message");
 
         $response = $this->handler->render($request, $exception);
 
-        list($code, $title, $detail) = $this->parseErrorResponse($response);
+        $errorContent = $this->parseErrorResponse($response)[0];
+        ray($response);
 
-        $this->assertEquals("500", $code);
-        $this->assertEquals('Internal Server Error', $title);
-        $this->assertEquals('', $detail);
+        $this->assertEquals("500", $response->getStatusCode());
+        $this->assertEquals('An error message', $errorContent->title);
+        $this->assertEquals('An error message', $errorContent->detail);
+    }
+
+    public function testValidationException()
+    {
+        $request = $this->makeJsonRequest();
+        $fac = $this->container->make(Factory::class);
+        $val = $fac->make([], [], [], []);
+        $val->errors()->add("field", "isInvalidMessage");
+
+        $exception = new ValidationException($val);
+
+        $response = $this->handler->render($request, $exception);
+
+        $errorContent = $this->parseErrorResponse($response);
+
+        $this->assertEquals(422, $response->getStatusCode());
+        $this->assertEquals($errorContent->field->source->pointer, "field");
+        $this->assertEquals($errorContent->field->detail, "isInvalidMessage");
     }
     
     /**
@@ -83,15 +119,13 @@ class JsonApiExceptionHandlerTest extends TestCase
      * Parses an error response into the code, title and detail.
      * 
      * @param Response $response 
-     * @return array<?string> 
+    //  * @return array<?string> 
      */
-    private function parseErrorResponse(Response $response): array
+    private function parseErrorResponse(Response $response): mixed
     {
         $content = json_decode($response->getContent());
-        $error = $content->errors[0];
+        $error = $content->errors;
 
-        ray($error);
-
-        return [$error->status, $error->title, $error->detail ?? null];
+        return $error;
     }
 }
