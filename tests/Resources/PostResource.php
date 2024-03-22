@@ -8,7 +8,7 @@ class PostResource extends JsonApiResource
 {
     protected function register(): array
     {
-        $data =  [
+        $data = [
             'id' => $this->resourceObject->identifier,
             'type' => 'posts',
             'attributes' => [
@@ -18,10 +18,10 @@ class PostResource extends JsonApiResource
             'relationships' => [
                 'author' => ['author', AccountResource::class],
                 'comments' => ['comments', CommentCollectionResource::class],
-            ]
+            ],
         ];
 
-        if($this->resourceObject->url){
+        if ($this->resourceObject->url) {
             $data['links'] = [
                 'view' => [
                     'href' => $this->resourceObject->url,

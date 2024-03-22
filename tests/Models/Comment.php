@@ -12,23 +12,23 @@ class Comment extends Model
 {
     use HasFactory, HasIdentifier;
 
-   protected $fillable = [
-       'identifier',
-       'content',
-   ];
+    protected $fillable = [
+        'identifier',
+        'content',
+    ];
 
+    public function commenter(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'account_id');
+    }
 
-   public function commenter(): BelongsTo {
-       return $this->belongsTo(Account::class, 'account_id');
-   }
+    public function post(): HasMany
+    {
+        return $this->hasMany(Post::class);
+    }
 
-   public function post(): HasMany {
-       return $this->hasMany(Post::class);
-   }
-
-   public static function newFactory(): CommentFactory
-   {
-       return CommentFactory::new();
-   }
-
+    public static function newFactory(): CommentFactory
+    {
+        return CommentFactory::new();
+    }
 }

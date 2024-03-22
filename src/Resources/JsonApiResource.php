@@ -10,36 +10,32 @@ abstract class JsonApiResource extends JsonResource
 {
     /**
      * The object represented in this resource
-     * @var mixed
      */
     protected mixed $resourceObject;
 
     /**
      * The registered resource data
-     * @var array
      */
     private array $resourceRegistrationData;
 
     /**
      * The relation references of this resource
-     * @var array
      */
     private array $resourceRelationshipReferences = [];
 
     /**
      * The included resources that the relation references are referencing
-     * @var array
      */
     public array $included = [];
 
     /**
      * The unique key of this resource
-     * @var string
      */
     public string $resourceKey;
 
     /**
      * The max relationship depth of this resource
+     *
      * @var int|mixed
      */
     public int $resourceDepth = 0;
@@ -48,21 +44,20 @@ abstract class JsonApiResource extends JsonResource
 
     /**
      * Construct with either a resource or an array with a resource and resource depth
-     * @param $jsonApiResourceData
      */
     public function __construct($jsonApiResourceData)
     {
         $resource = $jsonApiResourceData;
 
         if (is_array($jsonApiResourceData)) {
-            list($resource, $maxResourceDepth, $resourceDepth) = array_pad($jsonApiResourceData, 3, null);
+            [$resource, $maxResourceDepth, $resourceDepth] = array_pad($jsonApiResourceData, 3, null);
         }
 
         $this->maxResourceDepth = $maxResourceDepth ?? 2;
 
         parent::__construct($resource);
 
-        $this->resourceDepth =  $resourceDepth ?? 0;
+        $this->resourceDepth = $resourceDepth ?? 0;
         $this->resourceObject = $resource;
         $this->resourceRegistrationData = $this->register();
         $this->resourceKey = "{$this->resourceRegistrationData['type']}.{$this->resourceRegistrationData['id']}";
@@ -78,14 +73,13 @@ abstract class JsonApiResource extends JsonResource
 
     /**
      * Register the resource definition
-     * @return array
      */
     abstract protected function register(): array;
 
-
     /**
      * Build the response
-     * @param Request $request
+     *
+     * @param  Request  $request
      * @return array The response
      */
     public function toArray($request): array
@@ -100,15 +94,15 @@ abstract class JsonApiResource extends JsonResource
             'attributes' => $this->getAttributes($request),
         ];
 
-        if (!empty($this->resourceRegistrationData['meta'])) {
+        if (! empty($this->resourceRegistrationData['meta'])) {
             $response['meta'] = $this->resourceRegistrationData['meta'];
         }
 
-        if (!empty($this->resourceRegistrationData['links'])) {
+        if (! empty($this->resourceRegistrationData['links'])) {
             $response['links'] = $this->resourceRegistrationData['links'];
         }
 
-        if (!empty($this->resourceRelationshipReferences)) {
+        if (! empty($this->resourceRelationshipReferences)) {
             $response['relationships'] = $this->resourceRelationshipReferences;
         }
 
@@ -131,25 +125,24 @@ abstract class JsonApiResource extends JsonResource
 
     /**
      * Map a single relationship into an included resource
-     * @param $relationKey
-     * @param $relationData
      */
     private function mapSingleRelationship($relationKey, $relationData): void
     {
-        list($resourceData, $resourceClass) = $relationData;
+        [$resourceData, $resourceClass] = $relationData;
 
         // The data can be a string reference to relation name on the model or a resource model itself
         $resourceData = is_string($resourceData)
             ? $this->convertRelationStringToReference($resourceData)
             : $resourceData;
 
-        if (!$this->resourceHasData($resourceData, $resourceClass)) {
+        if (! $this->resourceHasData($resourceData, $resourceClass)) {
             return;
         }
 
         // Is this relation a collection or a single resource
         if (is_subclass_of($resourceClass, JsonApiCollectionResource::class)) {
             $this->addResourceCollectionRelation($relationKey, $resourceData, $resourceClass);
+
             return;
         }
 
@@ -158,9 +151,6 @@ abstract class JsonApiResource extends JsonResource
 
     /**
      * Add a collection relationship to the resource relationships and included data
-     * @param $relationKey
-     * @param $resourceDataCollection
-     * @param $resourceCollectionClass
      */
     private function addResourceCollectionRelation(
         $relationKey,
@@ -172,7 +162,7 @@ abstract class JsonApiResource extends JsonResource
 
         foreach ($resourceDataCollection as $resourceData) {
             $includedResource = new $resourceClass([$resourceData, $this->maxResourceDepth, $this->resourceDepth + 1]);
-            if (!$includedResource instanceof self) {
+            if (! $includedResource instanceof self) {
                 continue;
             }
             $this->addInclude($includedResource);
@@ -186,14 +176,11 @@ abstract class JsonApiResource extends JsonResource
 
     /**
      * Add a relation to the resource
-     * @param $relationKey
-     * @param $resourceData
-     * @param $resourceClass
      */
     private function addResourceRelation($relationKey, $resourceData, $resourceClass): void
     {
         $includedResource = new $resourceClass([$resourceData, $this->maxResourceDepth, $this->resourceDepth + 1]);
-        if (!$includedResource instanceof self) {
+        if (! $includedResource instanceof self) {
             return;
         }
 
@@ -206,9 +193,6 @@ abstract class JsonApiResource extends JsonResource
 
     /**
      * Check if the resource object has data
-     * @param $resourceData
-     * @param $resourceClass
-     * @return bool
      */
     private function resourceHasData($resourceData, $resourceClass): bool
     {
@@ -227,7 +211,8 @@ abstract class JsonApiResource extends JsonResource
 
     /**
      * Return the relation if it's loaded on the model
-     * @param string $dataPath The method name of the relation
+     *
+     * @param  string  $dataPath  The method name of the relation
      * @return mixed The loaded relationship
      */
     private function convertRelationStringToReference(string $dataPath): mixed
@@ -236,7 +221,7 @@ abstract class JsonApiResource extends JsonResource
             && $this->resourceObject->relationLoaded($dataPath) === false
         ) {
             return null;
-        } elseif (!isset($this->resourceObject->{$dataPath})) {
+        } elseif (! isset($this->resourceObject->{$dataPath})) {
             return null;
         }
 
@@ -255,19 +240,19 @@ abstract class JsonApiResource extends JsonResource
         );
     }
 
-
     /**
      * addInclude.
      *
      * Add an include to the list of includes based on the resource key. That way, if an include already exists,
      * both included resources will be merged and returned as one.
      *
-     * @param JsonApiResource $includedResource
      * @return $this
      */
-    private function addInclude(JsonApiResource $includedResource): self {
+    private function addInclude(JsonApiResource $includedResource): self
+    {
         $existingIncludeResource = ($this->included[$includedResource->resourceKey]) ?? null;
         $this->included[$includedResource->resourceKey] = $includedResource->combine($existingIncludeResource);
+
         return $this;
     }
 
@@ -275,12 +260,10 @@ abstract class JsonApiResource extends JsonResource
      * combine.
      *
      * Merges two similar resources together.
-     *
-     * @param JsonApiResource|null $second
-     * @return JsonApiResource
      */
-    private function combine(JsonApiResource $second = null): JsonApiResource {
-        if ( ! $second ) {
+    private function combine(?JsonApiResource $second = null): JsonApiResource
+    {
+        if (! $second) {
             return $this;
         }
         $this->resourceRegistrationData = array_replace_recursive(
@@ -301,17 +284,16 @@ abstract class JsonApiResource extends JsonResource
      *
      * @return Collection A collection of the includes.
      */
-    public function getIncludedResources(): Collection {
+    public function getIncludedResources(): Collection
+    {
         return collect(array_values($this->included));
     }
-
 
     /**
      * getAttributes.
      *
      * Assembles the attributes as requested, based on the information provided.
      *
-     * @param Request $request
      * @return mixed
      */
     private function getAttributes(Request $request): array
@@ -319,9 +301,9 @@ abstract class JsonApiResource extends JsonResource
         $attributes = $this->resourceRegistrationData['attributes'];
         $type = $this->resourceRegistrationData['type'];
 
-        if (!($fieldSet = $request->query('fields'))
-            || !array_key_exists($type, $fieldSet)
-            || !($fields = explode(',', $fieldSet[$type]))
+        if (! ($fieldSet = $request->query('fields'))
+            || ! array_key_exists($type, $fieldSet)
+            || ! ($fields = explode(',', $fieldSet[$type]))
         ) {
             return $attributes;
         }
@@ -331,7 +313,6 @@ abstract class JsonApiResource extends JsonResource
 
     /**
      * Create a relationship reference
-     * @return array
      */
     public function toRelationshipReferenceArray(): array
     {
@@ -343,8 +324,8 @@ abstract class JsonApiResource extends JsonResource
 
     /**
      * Include the loaded relations
-     * @param Request $request
-     * @return array
+     *
+     * @param  Request  $request
      */
     public function with($request): array
     {
@@ -358,9 +339,8 @@ abstract class JsonApiResource extends JsonResource
 
     /**
      * Hook into the generated response and optionally manipulate it.
-     * @param Request $request
-     * @param array $response
-     * @return array
+     *
+     * @param  Request  $request
      */
     protected function addToResponse($request, array $response): array
     {

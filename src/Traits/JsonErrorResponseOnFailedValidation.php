@@ -1,13 +1,12 @@
 <?php
 
-
 namespace Brainstud\JsonApi\Traits;
 
+use Brainstud\JsonApi\Responses\ErrorResponse;
+use Brainstud\JsonApi\Responses\Errors\DefaultError;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
-use Brainstud\JsonApi\Responses\ErrorResponse;
-use Brainstud\JsonApi\Responses\Errors\DefaultError;
 
 /**
  * Add this trait to the FormRequest to respond with a JSON validation error on an invalid request

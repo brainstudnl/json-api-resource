@@ -8,7 +8,7 @@ class CommentResource extends JsonApiResource
 {
     protected function register(): array
     {
-        $data =  [
+        $data = [
             'id' => $this->resourceObject->identifier,
             'type' => 'comments',
             'attributes' => [
@@ -16,8 +16,8 @@ class CommentResource extends JsonApiResource
             ],
             'relationships' => [
                 'post' => ['post', PostResource::class],
-                'commenter' =>  ['commenter', AccountResource::class],
-            ]
+                'commenter' => ['commenter', AccountResource::class],
+            ],
         ];
 
         return $data;

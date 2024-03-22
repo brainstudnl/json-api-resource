@@ -10,8 +10,8 @@ class JsonApiCollectionResource extends ResourceCollection
 {
     /**
      * Build the response
-     * @param Request $request
-     * @return array
+     *
+     * @param  Request  $request
      */
     public function toArray($request): array
     {
@@ -24,9 +24,8 @@ class JsonApiCollectionResource extends ResourceCollection
 
     /**
      * Hook into the generated response and optionally manipulate it.
-     * @param Request $request
-     * @param array $response
-     * @return array
+     *
+     * @param  Request  $request
      */
     protected function addToResponse($request, array $response): array
     {
@@ -35,8 +34,8 @@ class JsonApiCollectionResource extends ResourceCollection
 
     /**
      * Include the loaded relations
-     * @param Request $request
-     * @return array
+     *
+     * @param  Request  $request
      */
     public function with($request): array
     {
@@ -51,7 +50,6 @@ class JsonApiCollectionResource extends ResourceCollection
 
     /**
      * Compose a unique collection of loaded relations
-     * @return Collection
      */
     private function composeIncludesForCollection(): Collection
     {

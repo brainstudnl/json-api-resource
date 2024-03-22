@@ -11,23 +11,24 @@ class Account extends Model
 {
     use HasFactory, HasIdentifier;
 
-   protected $fillable = [
-       'identifier',
-       'name',
-       'email',
-   ];
+    protected $fillable = [
+        'identifier',
+        'name',
+        'email',
+    ];
 
+    public function posts(): HasMany
+    {
+        return $this->hasMany(Post::class, 'author_id');
+    }
 
-   public function posts(): HasMany {
-       return $this->hasMany(Post::class, 'author_id');
-   }
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
 
-   public function comments(): HasMany {
-       return $this->hasMany(Comment::class);
-   }
-
-   protected static function newFactory(): AccountFactory
-   {
-       return AccountFactory::new();
-   }
+    protected static function newFactory(): AccountFactory
+    {
+        return AccountFactory::new();
+    }
 }

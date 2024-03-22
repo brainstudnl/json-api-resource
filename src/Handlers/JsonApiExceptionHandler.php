@@ -25,8 +25,6 @@ use Throwable;
  * Class JsonApiExceptionHandler
  * Handles the rendering of exceptions that occur on JSON requests.
  * Initiated by app/Exceptions/Handler
- *
- * @package Brainstud\JsonApi\Handlers
  */
 class JsonApiExceptionHandler extends ExceptionHandler
 {

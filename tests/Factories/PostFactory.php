@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Brainstud\JsonApi\Tests\Factories;
 
 use Brainstud\JsonApi\Tests\Models\Account;
@@ -8,8 +7,8 @@ use Brainstud\JsonApi\Tests\Models\Post;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
-class PostFactory extends Factory {
-
+class PostFactory extends Factory
+{
     protected $model = Post::class;
 
     public function definition(): array
@@ -17,7 +16,7 @@ class PostFactory extends Factory {
         return [
             'identifier' => (string) Str::uuid(),
             'title' => $this->faker->sentence(3),
-            'content' => join(' ', $this->faker->paragraphs(4)),
+            'content' => implode(' ', $this->faker->paragraphs(4)),
         ];
     }
 
@@ -27,6 +26,4 @@ class PostFactory extends Factory {
             $account->author_id ??= Account::factory()->create()->id;
         });
     }
-
-
 }

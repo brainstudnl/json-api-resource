@@ -17,7 +17,7 @@ class JsonApiResourceTest extends TestCase
     {
         $account = Account::factory()->create();
 
-        Route::get('test-route', fn() => AccountResource::make($account));
+        Route::get('test-route', fn () => AccountResource::make($account));
         $response = $this->getJson('test-route');
 
         $response->assertExactJson([
@@ -35,7 +35,7 @@ class JsonApiResourceTest extends TestCase
     {
         $accounts = Account::factory()->count(3)->create();
 
-        Route::get('test-route', fn() => AccountResource::collection($accounts));
+        Route::get('test-route', fn () => AccountResource::collection($accounts));
         $response = $this->getJson('test-route');
 
         $response->assertExactJson([
@@ -49,7 +49,7 @@ class JsonApiResourceTest extends TestCase
             ->create();
 
         Route::get('test-route', fn () => (
-        AccountResource::make(Account::first()->load('posts'))
+            AccountResource::make(Account::first()->load('posts'))
         ));
         $response = $this->getJson('test-route');
 
@@ -69,11 +69,10 @@ class JsonApiResourceTest extends TestCase
         $response = $this->getJson('test-route?includes=author');
 
         $response->assertExactJson([
-            'data' => $this->createJsonResource($post, [ 'author' => $author]),
+            'data' => $this->createJsonResource($post, ['author' => $author]),
             'included' => [$this->createJsonResource($author)],
         ]);
     }
-
 
     public function testRelatedResources()
     {
@@ -88,7 +87,7 @@ class JsonApiResourceTest extends TestCase
         $response = $this->getJson('test-route?includes=comments');
 
         $response->assertExactJson([
-            'data' => $this->createJsonResource($post, [ 'comments' => $comments]),
+            'data' => $this->createJsonResource($post, ['comments' => $comments]),
             'included' => $this->createJsonResource($comments),
         ]);
     }
@@ -109,14 +108,13 @@ class JsonApiResourceTest extends TestCase
         $response = $this->getJson('test-route?includes=author,comments,comments.commenter');
 
         $response->assertExactJson([
-            'data' => $this->createJsonResource($post, ['author' => $author, 'comments' => [ $comment ]]),
+            'data' => $this->createJsonResource($post, ['author' => $author, 'comments' => [$comment]]),
             'included' => [
                 $this->createJsonResource($author),
-                $this->createJsonResource($comment, [ 'commenter' => $author ]),
-            ]
+                $this->createJsonResource($comment, ['commenter' => $author]),
+            ],
         ]);
     }
-
 
     public function testDeepRelatedResource()
     {
@@ -138,16 +136,15 @@ class JsonApiResourceTest extends TestCase
         ));
         $response = $this->getJson('test-route?includes=posts,posts.author,posts.comments,posts.comments.commenter');
 
-
         $response->assertExactJson([
-           'data' => $this->createJsonResource($author, [ 'posts' => [ $post ]]),
-           'included' => [
-               $this->createJsonResource($post, [ 'author' => $author, 'comments' => $comments ]),
-               $this->createJsonResource($author),
-               $this->createJsonResource($comments[0], [ 'commenter' => $commenter ]),
-               $this->createJsonResource($comments[1], [ 'commenter' => $authorAsCommenter ]),
-               $this->createJsonResource($commenter),
-           ]
+            'data' => $this->createJsonResource($author, ['posts' => [$post]]),
+            'included' => [
+                $this->createJsonResource($post, ['author' => $author, 'comments' => $comments]),
+                $this->createJsonResource($author),
+                $this->createJsonResource($comments[0], ['commenter' => $commenter]),
+                $this->createJsonResource($comments[1], ['commenter' => $authorAsCommenter]),
+                $this->createJsonResource($commenter),
+            ],
         ]);
     }
 
@@ -171,15 +168,15 @@ class JsonApiResourceTest extends TestCase
         $response = $this->getJson('test-route?includes=posts,posts.author,posts.comments,posts.comments.commenter');
 
         $response->assertExactJson([
-            'data' => $this->createJsonResource($postAuthor, [ 'posts' => [ $post ]]),
+            'data' => $this->createJsonResource($postAuthor, ['posts' => [$post]]),
             'included' => [
-                $this->createJsonResource($post, [ 'author' => $postAuthor, 'comments' => $comments ]),
+                $this->createJsonResource($post, ['author' => $postAuthor, 'comments' => $comments]),
                 $this->createJsonResource($postAuthor),
                 $this->createJsonResource($comments[0]),
                 $this->createJsonResource($comments[1]),
-            ]
+            ],
         ]);
-        $response->assertJsonMissing(['id' => $commentAuthor->identifier ]);
+        $response->assertJsonMissing(['id' => $commentAuthor->identifier]);
     }
 
     public function testResourceWithMetaData()
@@ -195,17 +192,17 @@ class JsonApiResourceTest extends TestCase
         $response->assertExactJson([
             'data' => $this->createJsonResource(
                 modelOrCollection: $account,
-                relationships: [ 'posts' => $account->posts ],
-                meta: [ 'experienced_author' => true ]
+                relationships: ['posts' => $account->posts],
+                meta: ['experienced_author' => true]
             ),
-            'included' => $this->createJsonResource($account->posts)
+            'included' => $this->createJsonResource($account->posts),
         ]);
     }
 
     public function testResourceWithLinkData()
     {
 
-        $link = 'https://some-link-to-blog.com' ;
+        $link = 'https://some-link-to-blog.com';
         $post = Post::factory([
             'url' => $link,
         ])->create();
@@ -216,7 +213,7 @@ class JsonApiResourceTest extends TestCase
         $response = $this->getJson('test-route');
 
         $response->assertExactJson([
-            'data' => $this->createJsonResource($post, links: [ 'view' => [ 'href' => $link ] ]),
+            'data' => $this->createJsonResource($post, links: ['view' => ['href' => $link]]),
         ]);
     }
 
@@ -251,9 +248,9 @@ class JsonApiResourceTest extends TestCase
         $response = $this->getJson('test-route?includes=author&fields[posts]=title&fields[accounts]=email');
 
         $response->assertExactJson([
-            'data' => $this->createJsonResource($post, ['author' => $author],  onlyAttributes: ['title']),
+            'data' => $this->createJsonResource($post, ['author' => $author], onlyAttributes: ['title']),
             'included' => [
-                $this->createJsonResource($author, onlyAttributes: ['email'])
+                $this->createJsonResource($author, onlyAttributes: ['email']),
             ],
         ]);
     }
@@ -280,11 +277,11 @@ class JsonApiResourceTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertExactJson([
-            'data' => $this->createJsonResource($post, [ 'comments' => [$comment] ]),
+            'data' => $this->createJsonResource($post, ['comments' => [$comment]]),
             'included' => [
-                $this->createJsonResource($comment, [ 'commenter' => $commenterAccount ]),
-                $this->createJsonResource($commenterAccount, [ 'comments' => [$comment] ]),
-            ]
+                $this->createJsonResource($comment, ['commenter' => $commenterAccount]),
+                $this->createJsonResource($commenterAccount, ['comments' => [$comment]]),
+            ],
         ]);
     }
 }
