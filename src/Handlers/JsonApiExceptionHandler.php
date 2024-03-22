@@ -15,7 +15,6 @@ use Illuminate\Validation\ValidationException;
 use RuntimeException;
 use Throwable;
 
-
 /**
  * Class JsonApiExceptionHandler
  * Handles the rendering of exceptions that occur on JSON requests.
@@ -27,6 +26,7 @@ class JsonApiExceptionHandler extends ExceptionHandler
     {
         $this->map(function (ModelNotFoundException|RelationNotFoundException $exception) {
             $title = "{$this->getModelForException($exception)} Not Found";
+
             return new NotFoundJsonApiException(
                 $title,
                 $exception->getMessage(),
@@ -37,21 +37,21 @@ class JsonApiExceptionHandler extends ExceptionHandler
 
         $this->map(function (LazyLoadingViolationException $exception) {
             return (new BadRequestJsonApiException(
-                "Lazy Loading Violation",
+                'Lazy Loading Violation',
                 $exception->getMessage(),
                 $exception->getPrevious(),
                 $exception->getCode(),
-            ))->withErrorName("LAZY_LOADING_VIOLATION");
+            ))->withErrorName('LAZY_LOADING_VIOLATION');
         });
 
         $this->renderable(function (JsonApiExceptionInterface $exception) {
             return ErrorResponse::make([new DefaultError(
                 (isset($exception->errorName) ? $exception->errorName : ''),
-                $exception->getTitle(), 
+                $exception->getTitle(),
                 $exception->getMessage(),
                 $exception,
                 $exception->getStatusCode(),
-                )], $exception->getStatusCode());
+            )], $exception->getStatusCode());
         });
 
         $this->renderable(function (ValidationException $validationException) {
@@ -64,6 +64,7 @@ class JsonApiExceptionHandler extends ExceptionHandler
                         ['pointer' => $key]
                     );
                 })->toArray();
+
             return ErrorResponse::make($defaultErrors, 422);
         });
     }
@@ -72,7 +73,6 @@ class JsonApiExceptionHandler extends ExceptionHandler
      * Prepare a JSON response for the given exception.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \Throwable  $e
      * @return \Illuminate\Http\JsonResponse
      */
     protected function prepareJsonResponse($request, Throwable $e)
@@ -80,14 +80,13 @@ class JsonApiExceptionHandler extends ExceptionHandler
         return ErrorResponse::make([
             new DefaultError(
                 'UNKNOWN_ERROR',
-                $this->defaultIfEmpty($e->getMessage(), "Unknown Error"),
+                $this->defaultIfEmpty($e->getMessage(), 'Unknown Error'),
                 $e->getMessage(),
                 $e,
                 $this->isHttpException($e) ? $e->getStatusCode() : 500,
-            )
+            ),
         ], $this->isHttpException($e) ? $e->getStatusCode() : 500);
     }
-
 
     public function map($from, $to = null)
     {
@@ -98,7 +97,7 @@ class JsonApiExceptionHandler extends ExceptionHandler
                 $from = $this->firstClosureParameterTypes($to = $from);
             }
 
-            if (!$to instanceof \Closure) {
+            if (! $to instanceof \Closure) {
                 throw new \InvalidArgumentException('Invalid exception mapping.');
             }
 
@@ -114,7 +113,7 @@ class JsonApiExceptionHandler extends ExceptionHandler
         };
     }
 
-    private function defaultIfEmpty(string $s, string $default): string 
+    private function defaultIfEmpty(string $s, string $default): string
     {
         return empty($s) ? $default : $s;
     }
