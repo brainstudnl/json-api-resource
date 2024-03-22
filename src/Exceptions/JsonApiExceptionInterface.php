@@ -7,7 +7,7 @@ use Throwable;
 /**
  * JsonApiExceptionInterface
  * 
- * This interface makes sure that all children will have a `getTitle()` function declared.
+ * This interface makes sure that all children will have a `getTitle()` and `getStatusCode()` function declared.
  * 
  * @package Brainstud\JsonApi\Exceptions
  */

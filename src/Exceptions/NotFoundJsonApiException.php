@@ -2,14 +2,17 @@
 
 namespace Brainstud\JsonApi\Exceptions;
 
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-
-abstract class NotFoundJsonApiException extends NotFoundHttpException implements JsonApiExceptionInterface
+class NotFoundJsonApiException extends JsonApiHttpException
 {
-    protected string $title;
-
-    public function getTitle(): string
+    public function __construct(?string $title = "Not Found", string $message = "The requested resource could not be found.", ?\Throwable $previous = null, int $code = 0, array $headers = [])
     {
-        return $this->title;
+        parent::__construct(
+            $title, 
+            404,
+            $message,
+            $previous,
+            $headers,
+            $code
+        );
     }
 }

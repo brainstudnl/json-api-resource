@@ -2,14 +2,17 @@
 
 namespace Brainstud\JsonApi\Exceptions;
 
-use Symfony\Component\Finder\Exception\AccessDeniedException;
-
-abstract class AccessDeniedJsonApiException extends AccessDeniedException implements JsonApiExceptionInterface
+class AccessDeniedJsonApiException extends JsonApiHttpException
 {
-    protected string $title;
-
-    public function getTitle(): string 
-    { 
-        return $this->title;
+    public function __construct(?string $title = "Access Denied", string $message = "No access to the requested resource.", ?\Throwable $previous = null, int $code = 0, array $headers = [])
+    {
+        parent::__construct(
+            $title,
+            403,
+            $message,
+            $previous,
+            $headers,
+            $code
+        );
     }
 }

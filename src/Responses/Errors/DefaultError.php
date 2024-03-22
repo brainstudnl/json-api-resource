@@ -10,7 +10,7 @@ class DefaultError extends AbstractError
 {
     /**
      * Create a new generic error
-     * @param string $code The UnlimitED error code
+     * @param string $code The error code
      * @param string $title The error title
      * @param string $detail The error details
      * @param ?int $httpStatus The HTTP Status code

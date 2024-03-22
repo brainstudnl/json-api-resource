@@ -2,14 +2,20 @@
 
 namespace Brainstud\JsonApi\Exceptions;
 
-use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use function PHPUnit\Framework\isEmpty;
 
-abstract class MethodNotAllowedJsonApiException extends MethodNotAllowedHttpException implements JsonApiExceptionInterface
+class MethodNotAllowedJsonApiException extends JsonApiHttpException
 {
-    protected string $title;
-
-    public function getTitle(): string
+    public function __construct(?string $title = "Method Not Allowed", string $message = "", ?\Throwable $previous = null, int $code = 0, array $headers = [])
     {
-        return $this->title;
+        $message = isEmpty($message) ? "The method" . strtoupper(request()->method()) . " is not supported for " . request()->route() : $message;
+        parent::__construct(
+            $title,
+            405,
+            $message,
+            $previous,
+            $headers,
+            $code
+        );
     }
 }
