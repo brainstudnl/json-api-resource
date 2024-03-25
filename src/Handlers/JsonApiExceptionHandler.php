@@ -13,6 +13,7 @@ use Illuminate\Database\LazyLoadingViolationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
 /**
@@ -25,7 +26,7 @@ class JsonApiExceptionHandler extends ExceptionHandler
     public function register(): void
     {
         $this->map(function (ModelNotFoundException|RelationNotFoundException $exception) {
-            $title = "{$this->getModelForException($exception)} Not Found";
+            $title = "{$this->getModelFromException($exception)} Not Found";
 
             return new NotFoundJsonApiException(
                 $title,
@@ -77,17 +78,22 @@ class JsonApiExceptionHandler extends ExceptionHandler
      */
     protected function prepareJsonResponse($request, Throwable $e)
     {
+        $statusCode = $e instanceof HttpExceptionInterface ? $e->getStatusCode() : 500;
+
         return ErrorResponse::make([
             new DefaultError(
                 'UNKNOWN_ERROR',
-                $this->defaultIfEmpty($e->getMessage(), 'Unknown Error'),
+                empty($e->getMessage()) ? 'Unknown Error' : $e->getMessage(),
                 $e->getMessage(),
                 $e,
-                $this->isHttpException($e) ? $e->getStatusCode() : 500,
+                $statusCode,
             ),
-        ], $this->isHttpException($e) ? $e->getStatusCode() : 500);
+        ], $statusCode);
     }
 
+    /**
+     * Overwrite `parent::map` to support union types.
+     */
     public function map($from, $to = null)
     {
         try {
@@ -105,16 +111,21 @@ class JsonApiExceptionHandler extends ExceptionHandler
         }
     }
 
-    private function getModelForException(ModelNotFoundException|RelationNotFoundException|LazyLoadingViolationException $exception): string
+    /**
+     * getModelFromException
+     *
+     * Returns the model of the exception for various Laravel Exceptions.
+     *
+     * Currently support:
+     *  - ModelNotFoundException
+     *  - RelationNotFoundException
+     *  - LazyLoadingViolationException
+     */
+    private function getModelFromException(ModelNotFoundException|RelationNotFoundException|LazyLoadingViolationException $exception): string
     {
         return match ($exception::class) {
             ModelNotFoundException::class => $exception->getModel(),
             default => $exception->model,
         };
-    }
-
-    private function defaultIfEmpty(string $s, string $default): string
-    {
-        return empty($s) ? $default : $s;
     }
 }

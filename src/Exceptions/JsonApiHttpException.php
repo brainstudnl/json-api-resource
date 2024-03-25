@@ -4,6 +4,11 @@ namespace Brainstud\JsonApi\Exceptions;
 
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
+/**
+ * JsonApiHttpException
+ *
+ * Base exception for JSON:API compliant error responses.
+ */
 class JsonApiHttpException extends HttpException implements JsonApiExceptionInterface
 {
     protected string $title = 'Json API Error';
