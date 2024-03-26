@@ -22,6 +22,8 @@ abstract class AbstractError
     /** @var string Detail about this error */
     protected $detail;
 
+    protected array $meta;
+
     /**
      * Set the status code
      *
@@ -42,9 +44,10 @@ abstract class AbstractError
         return (object) array_filter([
             'code' => (string) $this->code,
             'status' => (string) $this->status,
-            'source' => ! empty($this->source) ? (object) $this->source : null,
+            'source' => (! empty($this->source)) ? (object) $this->source : null,
             'title' => $this->title,
             'detail' => $this->detail,
+            'meta' => $this->meta,
         ]);
     }
 

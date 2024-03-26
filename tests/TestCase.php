@@ -28,6 +28,19 @@ class TestCase extends \Orchestra\Testbench\TestCase
     }
 
     /**
+     * Get package providers.
+     *
+     * @param  \Illuminate\Foundation\Application  $app
+     * @return array<int, class-string<\Illuminate\Support\ServiceProvider>>
+     */
+    protected function getPackageProviders($app)
+    {
+        return [
+            'Brainstud\JsonApi\ServiceProvider',
+        ];
+    }
+
+    /**
      * createJsonResource.
      *
      * Makes it easier to create an array structure of an API resource to prevent being repetitive.
