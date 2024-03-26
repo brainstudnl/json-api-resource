@@ -4,7 +4,7 @@ namespace Brainstud\JsonApi\Exceptions;
 
 class LockedJsonApiException extends JsonApiHttpException
 {
-    public function __construct(?string $title = 'Locked', string $message = 'The requested resource is locked.', ?\Throwable $previous = null, int $code = 0, array $headers = [])
+    public function __construct(?string $title = 'Locked', string $message = 'This information needs to be unlocked.', ?\Throwable $previous = null, int $code = 0, array $headers = [])
     {
         parent::__construct(
             __($title),

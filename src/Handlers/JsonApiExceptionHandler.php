@@ -29,7 +29,7 @@ class JsonApiExceptionHandler extends ExceptionHandler
     public function register(): void
     {
         $this->map(function (ModelNotFoundException|RelationNotFoundException $exception) {
-            $title = "{$this->getModelFromException($exception)} ".__('Not Found');
+            $title = "{$this->getModelFromException($exception)} ".strtolower(__('Not found'));
 
             return new NotFoundJsonApiException(
                 $title,
@@ -63,7 +63,7 @@ class JsonApiExceptionHandler extends ExceptionHandler
             $defaultErrors = collect($validationException->validator->errors()->messages())
                 ->map(function ($value, $key) {
                     return new DefaultError(
-                        __('VALIDATION_ERROR'),
+                        'VALIDATION_ERROR',
                         __('Validation error'),
                         $value[0],
                         ['pointer' => $key]
@@ -86,8 +86,8 @@ class JsonApiExceptionHandler extends ExceptionHandler
 
         return ErrorResponse::make([
             new DefaultError(
-                __('UNKNOWN_ERROR'),
-                empty($e->getMessage()) ? __('Unknown Error') : $e->getMessage(),
+                'UNKNOWN_ERROR',
+                empty($e->getMessage()) ? __('Unknown error') : $e->getMessage(),
                 $e->getMessage(),
                 $e,
                 $statusCode,
