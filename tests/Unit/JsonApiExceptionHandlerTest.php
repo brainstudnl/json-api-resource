@@ -2,6 +2,7 @@
 
 namespace Brainstud\JsonApi\Tests\Unit;
 
+use Brainstud\JsonApi\Exceptions\AccessDeniedJsonApiException;
 use Brainstud\JsonApi\Exceptions\JsonApiHttpException;
 use Brainstud\JsonApi\Exceptions\PaymentRequiredJsonApiException;
 use Brainstud\JsonApi\Handlers\JsonApiExceptionHandler;
@@ -10,6 +11,7 @@ use ErrorException;
 use Illuminate\Container\Container;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Validation\Factory;
 use Illuminate\Validation\ValidationException;
@@ -54,7 +56,7 @@ class JsonApiExceptionHandlerTest extends TestCase
     public function testJsonApiHttpExceptionImplementationWithDefaults()
     {
         $request = $this->makeJsonRequest();
-        $exception = new PaymentRequiredJsonApiException();
+        $exception = new PaymentRequiredJsonApiException;
 
         $response = $this->handler->render($request, $exception);
 
@@ -63,6 +65,20 @@ class JsonApiExceptionHandlerTest extends TestCase
         $this->assertEquals(402, $response->getStatusCode());
         $this->assertEquals('A payment is required to access the resource.', $errorContent->detail);
         $this->assertEquals('Payment Required', $errorContent->title);
+    }
+
+    public function testJsonApiHttpExceptionImplementationWithTranslations()
+    {
+        App::setLocale('nl');
+        $request = $this->makeJsonRequest()->setLocale('nl');
+        $exception = new AccessDeniedJsonApiException;
+
+        $response = $this->handler->render($request, $exception);
+
+        $errorContent = $this->parseErrorResponse($response)[0];
+
+        $this->assertEquals(403, $response->getStatusCode());
+        $this->assertEquals('Toegang Geweigerd', $errorContent->title);
     }
 
     public function testModelNotFoundException()

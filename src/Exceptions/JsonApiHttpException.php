@@ -11,14 +11,14 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class JsonApiHttpException extends HttpException implements JsonApiExceptionInterface
 {
-    protected string $title = 'Json API Error';
+    protected string $title;
 
     /** The name of the error as used in the application. */
     public ?string $errorName;
 
-    public function __construct(string $title, int $statusCode, string $message = '', ?\Throwable $previous = null, array $headers = [], int $code = 0)
+    public function __construct(string $title = 'Json API Error', int $statusCode = 400, string $message = '', ?\Throwable $previous = null, array $headers = [], int $code = 0)
     {
-        $this->title = $title;
+        $this->title = __($title);
 
         parent::__construct($statusCode, $message, $previous, $headers, $code);
     }

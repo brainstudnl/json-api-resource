@@ -17,8 +17,11 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
 /**
- * Class JsonApiExceptionHandler
- * Handles the rendering of exceptions that occur on JSON requests.
+ * JsonApiExceptionHandler
+ *
+ * Handles the rendering of exceptions that occur on JSON requests. It maps
+ * them to a JSON:API compliant error format.
+ *
  * Initiated by app/Exceptions/Handler
  */
 class JsonApiExceptionHandler extends ExceptionHandler
@@ -26,7 +29,7 @@ class JsonApiExceptionHandler extends ExceptionHandler
     public function register(): void
     {
         $this->map(function (ModelNotFoundException|RelationNotFoundException $exception) {
-            $title = "{$this->getModelFromException($exception)} Not Found";
+            $title = "{$this->getModelFromException($exception)} ".__('Not Found');
 
             return new NotFoundJsonApiException(
                 $title,
@@ -60,8 +63,8 @@ class JsonApiExceptionHandler extends ExceptionHandler
             $defaultErrors = collect($validationException->validator->errors()->messages())
                 ->map(function ($value, $key) {
                     return new DefaultError(
-                        'VALIDATION_ERROR',
-                        'Validation error',
+                        __('VALIDATION_ERROR'),
+                        __('Validation error'),
                         $value[0],
                         ['pointer' => $key]
                     );
@@ -83,8 +86,8 @@ class JsonApiExceptionHandler extends ExceptionHandler
 
         return ErrorResponse::make([
             new DefaultError(
-                'UNKNOWN_ERROR',
-                empty($e->getMessage()) ? 'Unknown Error' : $e->getMessage(),
+                __('UNKNOWN_ERROR'),
+                empty($e->getMessage()) ? __('Unknown Error') : $e->getMessage(),
                 $e->getMessage(),
                 $e,
                 $statusCode,

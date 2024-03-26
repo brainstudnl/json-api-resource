@@ -10,9 +10,9 @@ class MethodNotAllowedJsonApiException extends JsonApiHttpException
     {
         $message = isEmpty($message) ? 'The method'.strtoupper(request()->method()).' is not supported for '.request()->route() : $message;
         parent::__construct(
-            $title,
+            __($title),
             405,
-            $message,
+            __($message),
             $previous,
             $headers,
             $code
