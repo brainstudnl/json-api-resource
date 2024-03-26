@@ -63,8 +63,8 @@ class JsonApiExceptionHandlerTest extends TestCase
         $errorContent = $this->parseErrorResponse($response)[0];
 
         $this->assertEquals(402, $response->getStatusCode());
-        $this->assertEquals('A payment is required to access the resource.', $errorContent->detail);
-        $this->assertEquals('Payment Required', $errorContent->title);
+        $this->assertEquals('A payment is required to access this information.', $errorContent->detail);
+        $this->assertEquals('Payment required', $errorContent->title);
     }
 
     public function testJsonApiHttpExceptionImplementationWithTranslations()
@@ -78,7 +78,7 @@ class JsonApiExceptionHandlerTest extends TestCase
         $errorContent = $this->parseErrorResponse($response)[0];
 
         $this->assertEquals(403, $response->getStatusCode());
-        $this->assertEquals('Toegang Geweigerd', $errorContent->title);
+        $this->assertEquals('Toegang geweigerd', $errorContent->title);
     }
 
     public function testModelNotFoundException()
@@ -92,7 +92,7 @@ class JsonApiExceptionHandlerTest extends TestCase
 
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertEquals('No query results for model [TestModel].', $errorContent->detail);
-        $this->assertEquals('TestModel Not Found', $errorContent->title);
+        $this->assertEquals('TestModel not found', $errorContent->title);
     }
 
     public function testGenericExceptionResultsInInternalServerError()
