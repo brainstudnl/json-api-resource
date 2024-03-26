@@ -50,8 +50,9 @@ class JsonApiExceptionHandler extends ExceptionHandler
                 (isset($exception->errorName) ? $exception->errorName : ''),
                 $exception->getTitle(),
                 $exception->getMessage(),
-                $exception,
+                null,
                 $exception->getStatusCode(),
+                ['exception' => $this->convertExceptionToArray($exception)],
             )], $exception->getStatusCode());
         });
 

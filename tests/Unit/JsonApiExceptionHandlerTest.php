@@ -6,9 +6,11 @@ use Brainstud\JsonApi\Exceptions\JsonApiHttpException;
 use Brainstud\JsonApi\Exceptions\PaymentRequiredJsonApiException;
 use Brainstud\JsonApi\Handlers\JsonApiExceptionHandler;
 use Brainstud\JsonApi\Tests\TestCase;
+use ErrorException;
 use Illuminate\Container\Container;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Validation\Factory;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
@@ -85,7 +87,6 @@ class JsonApiExceptionHandlerTest extends TestCase
         $response = $this->handler->render($request, $exception);
 
         $errorContent = $this->parseErrorResponse($response)[0];
-        ray($response);
 
         $this->assertEquals('500', $response->getStatusCode());
         $this->assertEquals('An error message', $errorContent->title);
@@ -110,12 +111,40 @@ class JsonApiExceptionHandlerTest extends TestCase
         $this->assertEquals($errorContent->field->detail, 'isInvalidMessage');
     }
 
+    public function testErrorResponseHasMetaFilledWithDebugTrue()
+    {
+        Config::set('app.debug', true);
+        $request = $this->makeJsonRequest();
+        $exception = new PaymentRequiredJsonApiException();
+
+        $response = $this->handler->render($request, $exception);
+
+        $errorContent = $this->parseErrorResponse($response)[0];
+
+        $this->assertNotNull($errorContent->meta->exception->message);
+        $this->assertNotNull($errorContent->meta->exception->file);
+    }
+
+    public function testErrorResponseHasMetaFilledWithDebugFalse()
+    {
+        Config::set('app.debug', false);
+        $request = $this->makeJsonRequest();
+        $exception = new PaymentRequiredJsonApiException();
+
+        $response = $this->handler->render($request, $exception);
+
+        $errorContent = $this->parseErrorResponse($response)[0];
+
+        $this->assertNotNull($errorContent->meta->exception->message);
+
+        // Since it does not exist on the parsed response, an ErrorException('property does not exist') is thrown.
+        $this->assertThrows(fn () => $errorContent->meta->exception->file, ErrorException::class);
+    }
+
     /**
      * ParseErrorResponse
      *
      * Parses an error response into the code, title and detail.
-     *
-    //  * @return array<?string>
      */
     private function parseErrorResponse(Response $response): mixed
     {
