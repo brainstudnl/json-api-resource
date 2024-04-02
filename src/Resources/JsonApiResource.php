@@ -44,6 +44,9 @@ abstract class JsonApiResource extends JsonResource
 
     private int $maxResourceDepth;
 
+    /** Any metadata to be added to the request. It's manages by getter & setter */
+    private array $metadata = [];
+
     /**
      * Construct with either a resource or an array with a resource and resource depth
      */
@@ -96,8 +99,8 @@ abstract class JsonApiResource extends JsonResource
             'attributes' => $this->getAttributes($request),
         ];
 
-        if (! empty($this->resourceRegistrationData['meta'])) {
-            $response['meta'] = $this->resourceRegistrationData['meta'];
+        if (! empty($this->resourceRegistrationData['meta']) || ! empty($this->metadata)) {
+            $response['meta'] = array_merge($this->resourceRegistrationData['meta'] ?? [], $this->metadata);
         }
 
         if (! empty($this->resourceRegistrationData['links'])) {
@@ -109,6 +112,26 @@ abstract class JsonApiResource extends JsonResource
         }
 
         return $this->addToResponse($request, $response);
+    }
+
+    /**
+     * Add metadata to the resource.
+     *
+     * Please note that this metadata overwrites any added meta data from the `register()` function.
+     *
+     * @param  array  $metadata  An associative array to add to the metadata
+     *
+     * @throws \InvalidArgumentException if a non-associative array is given to the function
+     */
+    public function addMetadata(array $metadata): self
+    {
+        if (array_is_list($metadata)) {
+            throw new \InvalidArgumentException('Metadata should be an associative array, i.e. ["key" => "value"]');
+        }
+
+        $this->metadata = array_merge($this->metadata, $metadata);
+
+        return $this;
     }
 
     /**
@@ -305,8 +328,7 @@ abstract class JsonApiResource extends JsonResource
         $attributes = $this->resourceRegistrationData['attributes'];
         $type = $this->resourceRegistrationData['type'];
 
-        if (
-            ! ($fieldSet = $request->query('fields'))
+        if (! ($fieldSet = $request->query('fields'))
             || ! array_key_exists($type, $fieldSet)
             || ! ($fields = explode(',', $fieldSet[$type]))
         ) {
