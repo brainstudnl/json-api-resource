@@ -8,6 +8,7 @@
   "Locked": "Op slot",
   "This information needs to be unlocked.": "Deze informatie is (nog) niet vrij gegeven.",
   "Method not allowed": "Actie niet toegestaan",
+  "The method :METHOD is not supported for :route": "De methode :METHOD is niet ondersteund voor :route",
   "Not acceptable": "Niet acceptabel",
   "Cannot produce a response matching the acceptable values": "",
   "Not found": "Niet gevonden",

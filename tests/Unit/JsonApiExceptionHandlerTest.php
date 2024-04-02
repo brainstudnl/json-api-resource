@@ -2,8 +2,8 @@
 
 namespace Brainstud\JsonApi\Tests\Unit;
 
-use Brainstud\JsonApi\Exceptions\AccessDeniedJsonApiException;
 use Brainstud\JsonApi\Exceptions\JsonApiHttpException;
+use Brainstud\JsonApi\Exceptions\MethodNotAllowedJsonApiException;
 use Brainstud\JsonApi\Exceptions\PaymentRequiredJsonApiException;
 use Brainstud\JsonApi\Handlers\JsonApiExceptionHandler;
 use Brainstud\JsonApi\Tests\TestCase;
@@ -70,15 +70,19 @@ class JsonApiExceptionHandlerTest extends TestCase
     public function testJsonApiHttpExceptionImplementationWithTranslations()
     {
         App::setLocale('nl');
-        $request = $this->makeJsonRequest()->setLocale('nl');
-        $exception = new AccessDeniedJsonApiException;
+        $request = $this->makeJsonRequest();
+        $exception = new MethodNotAllowedJsonApiException;
 
         $response = $this->handler->render($request, $exception);
 
         $errorContent = $this->parseErrorResponse($response)[0];
 
-        $this->assertEquals(403, $response->getStatusCode());
-        $this->assertEquals('Toegang geweigerd', $errorContent->title);
+        $this->assertEquals(405, $response->getStatusCode());
+        $this->assertEquals('Actie niet toegestaan', $errorContent->title);
+        $this->assertEquals(
+            'De methode '.request()->method().' is niet ondersteund voor '.request()->path(),
+            $errorContent->detail
+        );
     }
 
     public function testModelNotFoundException()
