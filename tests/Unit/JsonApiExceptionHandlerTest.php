@@ -80,7 +80,7 @@ class JsonApiExceptionHandlerTest extends TestCase
         $this->assertEquals(405, $response->getStatusCode());
         $this->assertEquals('Actie niet toegestaan', $errorContent->title);
         $this->assertEquals(
-            'De methode '.request()->method().' is niet ondersteund voor '.request()->path(),
+            'Deze actie ('.request()->method().') is niet ondersteund voor '.request()->path().'.',
             $errorContent->detail
         );
     }
