@@ -13,7 +13,7 @@ abstract class JsonApiResource extends JsonResource
      *
      * @deprecated please use `resource` instead
      */
-    protected mixed $resourceObject;
+    public mixed $resourceObject;
 
     /**
      * The registered resource data
