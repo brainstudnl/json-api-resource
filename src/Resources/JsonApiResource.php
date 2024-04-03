@@ -10,6 +10,8 @@ abstract class JsonApiResource extends JsonResource
 {
     /**
      * The object represented in this resource
+     *
+     * @deprecated please use `resource` instead
      */
     protected mixed $resourceObject;
 
@@ -200,7 +202,8 @@ abstract class JsonApiResource extends JsonResource
             return false;
         }
 
-        if (is_subclass_of($resourceClass, JsonApiCollectionResource::class) &&
+        if (
+            is_subclass_of($resourceClass, JsonApiCollectionResource::class) &&
             $resourceData->isEmpty()
         ) {
             return false;
@@ -217,7 +220,8 @@ abstract class JsonApiResource extends JsonResource
      */
     private function convertRelationStringToReference(string $dataPath): mixed
     {
-        if (method_exists($this->resourceObject, 'relationLoaded')
+        if (
+            method_exists($this->resourceObject, 'relationLoaded')
             && $this->resourceObject->relationLoaded($dataPath) === false
         ) {
             return null;
@@ -301,7 +305,8 @@ abstract class JsonApiResource extends JsonResource
         $attributes = $this->resourceRegistrationData['attributes'];
         $type = $this->resourceRegistrationData['type'];
 
-        if (! ($fieldSet = $request->query('fields'))
+        if (
+            ! ($fieldSet = $request->query('fields'))
             || ! array_key_exists($type, $fieldSet)
             || ! ($fields = explode(',', $fieldSet[$type]))
         ) {
