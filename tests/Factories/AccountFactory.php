@@ -14,7 +14,7 @@ class AccountFactory extends Factory
     {
         return [
             'identifier' => Str::uuid(),
-            'name' => $this->faker->sentence(3),
+            'name' => $this->faker->name,
         ];
     }
 }

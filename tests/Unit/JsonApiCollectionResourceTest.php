@@ -2,6 +2,7 @@
 
 namespace Brainstud\JsonApi\Tests\Unit;
 
+use Brainstud\JsonApi\Resources\JsonApiResource;
 use Brainstud\JsonApi\Tests\Models\Account;
 use Brainstud\JsonApi\Tests\Models\Comment;
 use Brainstud\JsonApi\Tests\Models\Post;
@@ -99,5 +100,23 @@ class JsonApiCollectionResourceTest extends TestCase
                 $this->createJsonResource($postClaire->comments[2]->commenter),
             ],
         ]);
+    }
+
+    public function testAddMetaToResources(): void
+    {
+        $accounts = Account::factory()->count(3)->create();
+
+        Route::get(
+            'test-route',
+            fn () => AccountCollectionResource::make(Account::all())->addMetadataToResources(
+                fn (JsonApiResource $res) => $res->addMetadata(['hello' => $res->resourceObject->name])
+            )
+        );
+
+        $response = $this->getJson('test-route');
+
+        $accounts->each(function (Account $account) use ($response) {
+            $response->assertJsonFragment(['meta' => ['hello' => $account->name]]);
+        });
     }
 }
