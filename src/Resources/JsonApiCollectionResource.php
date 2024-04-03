@@ -51,15 +51,15 @@ class JsonApiCollectionResource extends ResourceCollection
     /**
      * Add metadata to each resource of the collection.
      *
-     * Performs a callback on the collection. You have acces to the resource in the callback.
-     * Therefore, you can call addMetadata on the collected resources.
+     * Performs a callback on the collection that adds the output of the given callback to the additional of that resource.
+     * You have acces to the model (resourceObject) in the callback.
      *
      * i.e.
-     * `(new ObjectResourceCollection)($data)->addMetadataToResources(fn (ObjectResource $object) => $object->addMetadata(["meta" => "data"]))`
+     * `(new ObjectResourceCollection)($data)->additionalToResources(fn (Model $objectModel) => ["meta" => $objectModel->getMeta()])`
      */
-    public function addMetadataToResources(callable $fn): self
+    public function additionalToResources(callable $fn): self
     {
-        $this->collection->each($fn);
+        $this->collection->each(fn (JsonApiResource $resource) => $resource->additional($fn($resource->resourceObject)));
 
         return $this;
     }

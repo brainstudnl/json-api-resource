@@ -292,7 +292,7 @@ class JsonApiResourceTest extends TestCase
 
         Route::get('test-route', fn (Request $request) => (
             AccountResource::make([Account::with(explode(',', $request->query()['includes']))->first(), 2])
-                ->addMetadata(['added_metadata' => true])
+                ->additional(['added_metadata' => true])
         ));
 
         $response = $this->getJson('test-route?includes=posts');
@@ -311,8 +311,8 @@ class JsonApiResourceTest extends TestCase
 
         Route::get('test-route', fn (Request $request) => (
             AccountResource::make([Account::with(explode(',', $request->query()['includes']))->first(), 2])
-                ->addMetadata(['added_metadata' => true])
-                ->addMetadata(['extra_metadata' => true])
+                ->additional(['added_metadata' => true])
+                ->additional(['extra_metadata' => true])
         ));
 
         $response = $this->getJson('test-route?includes=posts');
@@ -330,7 +330,7 @@ class JsonApiResourceTest extends TestCase
 
         Route::get('test-route', fn (Request $request) => (
             AccountResource::make([Account::with(explode(',', $request->query()['includes']))->first(), 2])
-                ->addMetadata(['experienced_author' => false])
+                ->additional(['experienced_author' => false])
         ));
 
         $response = $this->getJson('test-route?includes=posts');

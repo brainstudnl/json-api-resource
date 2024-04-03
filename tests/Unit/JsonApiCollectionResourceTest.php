@@ -2,7 +2,6 @@
 
 namespace Brainstud\JsonApi\Tests\Unit;
 
-use Brainstud\JsonApi\Resources\JsonApiResource;
 use Brainstud\JsonApi\Tests\Models\Account;
 use Brainstud\JsonApi\Tests\Models\Comment;
 use Brainstud\JsonApi\Tests\Models\Post;
@@ -108,9 +107,10 @@ class JsonApiCollectionResourceTest extends TestCase
 
         Route::get(
             'test-route',
-            fn () => AccountCollectionResource::make(Account::all())->addMetadataToResources(
-                fn (JsonApiResource $res) => $res->addMetadata(['hello' => $res->resourceObject->name])
-            )
+            fn () => AccountCollectionResource::make(Account::all())
+                ->additionalToResources(
+                    fn (Account $model) => ['hello' => $model->name]
+                )
         );
 
         $response = $this->getJson('test-route');
