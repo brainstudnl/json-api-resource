@@ -9,10 +9,10 @@ class CommentResource extends JsonApiResource
     protected function register(): array
     {
         $data = [
-            'id' => $this->resourceObject->identifier,
+            'id' => $this->resource->identifier,
             'type' => 'comments',
             'attributes' => [
-                'content' => $this->resourceObject->content,
+                'content' => $this->resource->content,
             ],
             'relationships' => [
                 'post' => ['post', PostResource::class],

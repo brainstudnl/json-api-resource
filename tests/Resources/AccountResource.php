@@ -10,10 +10,10 @@ class AccountResource extends JsonApiResource
     {
 
         $data = [
-            'id' => $this->resourceObject->identifier,
+            'id' => $this->resource->identifier,
             'type' => 'accounts',
             'attributes' => [
-                'name' => $this->resourceObject->name,
+                'name' => $this->resource->name,
             ],
             'relationships' => [
                 'posts' => ['posts', PostCollectionResource::class],
@@ -21,11 +21,11 @@ class AccountResource extends JsonApiResource
             ],
         ];
 
-        if ($this->resourceObject->email) {
-            $data['attributes']['email'] = $this->resourceObject->email;
+        if ($this->resource->email) {
+            $data['attributes']['email'] = $this->resource->email;
         }
 
-        if ($this->resourceObject->posts()->count() >= 10) {
+        if ($this->resource->posts()->count() >= 10) {
             $data['meta'] = [
                 'experienced_author' => true,
             ];
