@@ -86,7 +86,7 @@ abstract class JsonApiResource extends JsonResource
      */
     public function toArray($request): array
     {
-        if (is_null($this->resourceObject)) {
+        if (is_null($this->resource)) {
             return [];
         }
 
@@ -221,15 +221,15 @@ abstract class JsonApiResource extends JsonResource
     private function convertRelationStringToReference(string $dataPath): mixed
     {
         if (
-            method_exists($this->resourceObject, 'relationLoaded')
-            && $this->resourceObject->relationLoaded($dataPath) === false
+            method_exists($this->resource, 'relationLoaded')
+            && $this->resource->relationLoaded($dataPath) === false
         ) {
             return null;
-        } elseif (! isset($this->resourceObject->{$dataPath})) {
+        } elseif (! isset($this->resource->{$dataPath})) {
             return null;
         }
 
-        return $this->resourceObject->{$dataPath};
+        return $this->resource->{$dataPath};
     }
 
     /**
