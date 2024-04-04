@@ -28,19 +28,19 @@ class Course extends Model
 // CourseResource.php
 
 /**
- * @property Course $resourceObject 
+ * @property Course $resource 
  */
 class CourseResource extends JsonApiResource
 {
     protected function register(): array
     {
         return [
-            'id' => $this->resourceObject->id,
+            'id' => $this->resource->id,
             'type' => 'courses',
             'attributes' => [
-                'title' => $this->resourceObject->title,
-                'description' => $this->resourceObject->description,
-                'created_at' => $this->resourceObject->created_at->format('c'),
+                'title' => $this->resource->title,
+                'description' => $this->resource->description,
+                'created_at' => $this->resource->created_at->format('c'),
             ],
             'relationships' => [
                 'enrollments' => ['enrollments', EnrollmentResourceCollection::class],
@@ -76,17 +76,17 @@ composer require brainstud/json-api-resource
 
 ## Usage
 - Let your resource object extend from `JsonApiResource` instead of `JsonResource`.
-- Implement a `register` method that returns the following array. The register has access to `$this->resourceObject` which contains the current model
+- Implement a `register` method that returns the following array. The register has access to `$this->resource` which contains the current model
 
 ```php
 protected function register(): array
 {
     return [
-        'id' => $this->resourceObject->identifier,
+        'id' => $this->resource->identifier,
         'type' => 'object_type',
         'attributes' => [
-            'field' => $this->resourceObject->field,
-            'other_field' => $this->resourceObject->other_field,
+            'field' => $this->resource->field,
+            'other_field' => $this->resource->other_field,
         ],
         'relationships' => [
             'items' => ['items', ItemsResourceCollection::class],
