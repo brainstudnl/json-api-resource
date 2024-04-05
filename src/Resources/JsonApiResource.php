@@ -9,13 +9,6 @@ use Illuminate\Support\Collection;
 abstract class JsonApiResource extends JsonResource
 {
     /**
-     * The object represented in this resource
-     *
-     * @deprecated please use `resource` instead
-     */
-    protected mixed $resourceObject;
-
-    /**
      * The registered resource data
      */
     private array $resourceRegistrationData;
@@ -60,7 +53,6 @@ abstract class JsonApiResource extends JsonResource
         parent::__construct($resource);
 
         $this->resourceDepth = $resourceDepth ?? 0;
-        $this->resourceObject = $resource;
         $this->resourceRegistrationData = $this->register();
         $this->resourceKey = "{$this->resourceRegistrationData['type']}.{$this->resourceRegistrationData['id']}";
 
