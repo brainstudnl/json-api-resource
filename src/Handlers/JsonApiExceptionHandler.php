@@ -2,61 +2,134 @@
 
 namespace Brainstud\JsonApi\Handlers;
 
-use Brainstud\JsonApi\Responses\Errors\ForbiddenError;
-use Brainstud\JsonApi\Responses\Errors\InternalServerError;
-use Brainstud\JsonApi\Responses\Errors\MethodNotAllowedError;
-use Brainstud\JsonApi\Responses\Errors\NotFoundError;
-use Brainstud\JsonApi\Responses\Errors\UnauthorizedError;
-use Brainstud\JsonApi\Responses\Errors\UnprocessableEntityError;
-use Exception;
-use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Auth\AuthenticationException;
+use Brainstud\JsonApi\Exceptions\BadRequestJsonApiException;
+use Brainstud\JsonApi\Exceptions\JsonApiExceptionInterface;
+use Brainstud\JsonApi\Exceptions\NotFoundJsonApiException;
+use Brainstud\JsonApi\Responses\ErrorResponse;
+use Brainstud\JsonApi\Responses\Errors\DefaultError;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Eloquent\RelationNotFoundException;
+use Illuminate\Database\LazyLoadingViolationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+use RuntimeException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
 /**
- * Class JsonApiExceptionHandler
- * Handles the rendering of exceptions that occur on JSON requests.
+ * JsonApiExceptionHandler
+ *
+ * Handles the rendering of exceptions that occur on JSON requests. It maps
+ * them to a JSON:API compliant error format.
+ *
  * Initiated by app/Exceptions/Handler
  */
 class JsonApiExceptionHandler extends ExceptionHandler
 {
-    public function render($request, Throwable $exception)
+    public function register(): void
     {
-        switch ($exception) {
-            case $exception instanceof ModelNotFoundException:
-                // Fall through to NotFoundError
-            case $exception instanceof NotFoundHttpException:
-                return (new NotFoundError)->response();
+        $this->map(function (ModelNotFoundException|RelationNotFoundException $exception) {
+            $title = "{$this->getModelFromException($exception)} ".strtolower(__('Not found'));
 
-            case $exception instanceof AuthenticationException:
-                return (new UnauthorizedError)->response();
+            return new NotFoundJsonApiException(
+                $title,
+                $exception->getMessage(),
+                $exception->getPrevious(),
+                $exception->getCode(),
+            );
+        });
 
-            case $exception instanceof MethodNotAllowedHttpException:
-                return (new MethodNotAllowedError)->response();
+        $this->map(function (LazyLoadingViolationException $exception) {
+            return (new BadRequestJsonApiException(
+                'Lazy Loading Violation',
+                $exception->getMessage(),
+                $exception->getPrevious(),
+                $exception->getCode(),
+            ))->withErrorName('LAZY_LOADING_VIOLATION');
+        });
 
-            case $exception instanceof AuthorizationException: // Fall through to ForbiddenError
-            case $exception instanceof AccessDeniedHttpException:
-                return (new ForbiddenError)->response();
+        $this->renderable(function (JsonApiExceptionInterface $exception) {
+            return ErrorResponse::make([new DefaultError(
+                (isset($exception->errorName) ? $exception->errorName : ''),
+                $exception->getTitle(),
+                $exception->getMessage(),
+                null,
+                $exception->getStatusCode(),
+                ['exception' => $this->convertExceptionToArray($exception)],
+            )], $exception->getStatusCode());
+        });
 
-            case $exception instanceof UnprocessableEntityHttpException:
-                return (new UnprocessableEntityError)->response();
+        $this->renderable(function (ValidationException $validationException) {
+            $defaultErrors = collect($validationException->validator->errors()->messages())
+                ->map(function ($value, $key) {
+                    return new DefaultError(
+                        'VALIDATION_ERROR',
+                        __('Validation error'),
+                        $value[0],
+                        ['pointer' => $key]
+                    );
+                })->toArray();
 
-            case $exception instanceof HttpException: // Let all other HttpExceptions fall through as is. (validation errors, errors from packages, ...)
-            case $exception instanceof ValidationException:
-                break;
+            return ErrorResponse::make($defaultErrors, 422);
+        });
+    }
 
-            case $exception instanceof Exception:
-                return (new InternalServerError)->response();
+    /**
+     * Prepare a JSON response for the given exception.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function prepareJsonResponse($request, Throwable $e)
+    {
+        $statusCode = $e instanceof HttpExceptionInterface ? $e->getStatusCode() : 500;
+
+        return ErrorResponse::make([
+            new DefaultError(
+                'UNKNOWN_ERROR',
+                empty($e->getMessage()) ? __('Unknown error') : $e->getMessage(),
+                $e->getMessage(),
+                $e,
+                $statusCode,
+            ),
+        ], $statusCode);
+    }
+
+    /**
+     * Overwrite `parent::map` to support union types.
+     */
+    public function map($from, $to = null)
+    {
+        try {
+            parent::map($from, $to);
+        } catch (RuntimeException) {
+            if (is_callable($from) && is_null($to)) {
+                $from = $this->firstClosureParameterTypes($to = $from);
+            }
+
+            if (! $to instanceof \Closure) {
+                throw new \InvalidArgumentException('Invalid exception mapping.');
+            }
+
+            array_map(fn ($f) => parent::map($f, $to), $from);
         }
+    }
 
-        return parent::render($request, $exception);
+    /**
+     * getModelFromException
+     *
+     * Returns the model of the exception for various Laravel Exceptions.
+     *
+     * Currently support:
+     *  - ModelNotFoundException
+     *  - RelationNotFoundException
+     *  - LazyLoadingViolationException
+     */
+    private function getModelFromException(ModelNotFoundException|RelationNotFoundException|LazyLoadingViolationException $exception): string
+    {
+        return match ($exception::class) {
+            ModelNotFoundException::class => $exception->getModel(),
+            default => $exception->model,
+        };
     }
 }
