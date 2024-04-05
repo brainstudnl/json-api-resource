@@ -96,8 +96,8 @@ abstract class JsonApiResource extends JsonResource
             'attributes' => $this->getAttributes($request),
         ];
 
-        if (! empty($this->resourceRegistrationData['meta'])) {
-            $response['meta'] = $this->resourceRegistrationData['meta'];
+        if (! empty($this->resourceRegistrationData['meta']) || ! empty($this->additional)) {
+            $response['meta'] = array_merge($this->resourceRegistrationData['meta'] ?? [], $this->additional);
         }
 
         if (! empty($this->resourceRegistrationData['links'])) {
@@ -109,6 +109,27 @@ abstract class JsonApiResource extends JsonResource
         }
 
         return $this->addToResponse($request, $response);
+    }
+
+    /**
+     * Add metadata to the resource.
+     *
+     * Saves the given data to the `$additional` property.
+     * Please note that this metadata overwrites any added metadata from the `register()` function.
+     *
+     * @param  array  $data  An associative array to add to additional
+     *
+     * @throws \InvalidArgumentException if a non-associative array is given to the function
+     */
+    public function additional(array $data): self
+    {
+        if (array_is_list($data)) {
+            throw new \InvalidArgumentException('Metadata should be an associative array, i.e. ["key" => "value"]');
+        }
+
+        $this->additional = array_merge($this->additional, $data);
+
+        return $this;
     }
 
     /**
@@ -202,9 +223,8 @@ abstract class JsonApiResource extends JsonResource
             return false;
         }
 
-        if (
-            is_subclass_of($resourceClass, JsonApiCollectionResource::class) &&
-            $resourceData->isEmpty()
+        if (is_subclass_of($resourceClass, JsonApiCollectionResource::class)
+            && $resourceData->isEmpty()
         ) {
             return false;
         }
@@ -305,8 +325,7 @@ abstract class JsonApiResource extends JsonResource
         $attributes = $this->resourceRegistrationData['attributes'];
         $type = $this->resourceRegistrationData['type'];
 
-        if (
-            ! ($fieldSet = $request->query('fields'))
+        if (! ($fieldSet = $request->query('fields'))
             || ! array_key_exists($type, $fieldSet)
             || ! ($fields = explode(',', $fieldSet[$type]))
         ) {

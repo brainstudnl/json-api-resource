@@ -100,4 +100,23 @@ class JsonApiCollectionResourceTest extends TestCase
             ],
         ]);
     }
+
+    public function testAddMetaToResources(): void
+    {
+        $accounts = Account::factory()->count(3)->create();
+
+        Route::get(
+            'test-route',
+            fn () => AccountCollectionResource::make(Account::all())
+                ->additionalToResources(
+                    fn (Account $model) => ['hello' => $model->name]
+                )
+        );
+
+        $response = $this->getJson('test-route');
+
+        $accounts->each(function (Account $account) use ($response) {
+            $response->assertJsonFragment(['meta' => ['hello' => $account->name]]);
+        });
+    }
 }
