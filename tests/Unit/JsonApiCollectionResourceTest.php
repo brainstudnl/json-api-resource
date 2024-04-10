@@ -108,7 +108,7 @@ class JsonApiCollectionResourceTest extends TestCase
         Route::get(
             'test-route',
             fn () => AccountCollectionResource::make(Account::all())
-                ->additionalToResources(
+                ->addMetaToResources(
                     fn (Account $model) => ['hello' => $model->name]
                 )
         );

@@ -292,16 +292,15 @@ class JsonApiResourceTest extends TestCase
 
         Route::get('test-route', fn (Request $request) => (
             AccountResource::make([Account::with(explode(',', $request->query()['includes']))->first(), 2])
-                ->additional(['added_metadata' => true])
+                ->addMeta(['added_metadata' => true])
         ));
 
         $response = $this->getJson('test-route?includes=posts');
 
-        ray($response->getContent());
         $response->assertOk();
         $response->assertJsonFragment(['added_metadata' => true]);
 
-        // The one below comes from te resource defintition (if more than 10 posts)
+        // The one below comes from the register function (if more than 10 posts)
         $response->assertJsonFragment(['experienced_author' => true]);
     }
 
@@ -309,15 +308,14 @@ class JsonApiResourceTest extends TestCase
     {
         Account::factory()->create();
 
-        Route::get('test-route', fn (Request $request) => (
-            AccountResource::make([Account::with(explode(',', $request->query()['includes']))->first(), 2])
-                ->additional(['added_metadata' => true])
-                ->additional(['extra_metadata' => true])
+        Route::get('test-route', fn () => (
+            AccountResource::make([Account::first(), 2])
+                ->addMeta(['added_metadata' => true])
+                ->addMeta(['extra_metadata' => true])
         ));
 
-        $response = $this->getJson('test-route?includes=posts');
+        $response = $this->getJson('test-route');
 
-        ray($response->getContent());
         $response->assertOk();
         $response->assertJsonFragment(['added_metadata' => true]);
         $response->assertJsonFragment(['extra_metadata' => true]);
@@ -326,11 +324,11 @@ class JsonApiResourceTest extends TestCase
     public function testAddMetadataOverwritesExistingKeys()
     {
         $author = Account::factory()->create();
-        $posts = Post::factory(10)->for($author, 'author')->create();
+        Post::factory(10)->for($author, 'author')->create();
 
-        Route::get('test-route', fn (Request $request) => (
-            AccountResource::make([Account::with(explode(',', $request->query()['includes']))->first(), 2])
-                ->additional(['experienced_author' => false])
+        Route::get('test-route', fn () => (
+            AccountResource::make([Account::first(), 2])
+                ->addMeta(['experienced_author' => false])
         ));
 
         $response = $this->getJson('test-route?includes=posts');
