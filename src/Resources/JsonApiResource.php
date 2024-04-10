@@ -35,6 +35,16 @@ abstract class JsonApiResource extends JsonResource
      */
     public int $resourceDepth = 0;
 
+    /**
+     * Metadata for the resource
+     *
+     * NOTE: this differs from `additional` on JsonResource which adds to the response.
+     */
+    public array $meta = [];
+
+    /**
+     * The maximum amount of (sub) includes to include.
+     */
     private int $maxResourceDepth;
 
     /**
@@ -88,8 +98,8 @@ abstract class JsonApiResource extends JsonResource
             'attributes' => $this->getAttributes($request),
         ];
 
-        if (! empty($this->resourceRegistrationData['meta']) || ! empty($this->additional)) {
-            $response['meta'] = array_merge($this->resourceRegistrationData['meta'] ?? [], $this->additional);
+        if (! empty($this->resourceRegistrationData['meta']) || ! empty($this->meta)) {
+            $response['meta'] = array_merge($this->resourceRegistrationData['meta'] ?? [], $this->meta);
         }
 
         if (! empty($this->resourceRegistrationData['links'])) {
@@ -106,20 +116,20 @@ abstract class JsonApiResource extends JsonResource
     /**
      * Add metadata to the resource.
      *
-     * Saves the given data to the `$additional` property.
+     * Saves the given data to the `$meta` property.
      * Please note that this metadata overwrites any added metadata from the `register()` function.
      *
-     * @param  array  $data  An associative array to add to additional
+     * @param  array  $data  An associative array to add to the metadata
      *
      * @throws \InvalidArgumentException if a non-associative array is given to the function
      */
-    public function additional(array $data): self
+    public function addMeta(array $data): self
     {
         if (array_is_list($data)) {
             throw new \InvalidArgumentException('Metadata should be an associative array, i.e. ["key" => "value"]');
         }
 
-        $this->additional = array_merge($this->additional, $data);
+        $this->meta = array_merge($this->meta, $data);
 
         return $this;
     }
