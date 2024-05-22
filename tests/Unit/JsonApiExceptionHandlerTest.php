@@ -127,8 +127,8 @@ class JsonApiExceptionHandlerTest extends TestCase
         $errorContent = $this->parseErrorResponse($response);
 
         $this->assertEquals(422, $response->getStatusCode());
-        $this->assertEquals($errorContent->field->source->pointer, 'field');
-        $this->assertEquals($errorContent->field->detail, 'isInvalidMessage');
+        $this->assertEquals($errorContent[0]->source->pointer, 'field');
+        $this->assertEquals($errorContent[0]->detail, 'isInvalidMessage');
     }
 
     public function testErrorResponseHasMetaFilledWithDebugTrue()
