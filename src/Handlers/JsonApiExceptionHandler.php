@@ -61,14 +61,14 @@ class JsonApiExceptionHandler extends ExceptionHandler
 
         $this->renderable(function (ValidationException $validationException) {
             $defaultErrors = collect($validationException->validator->errors()->messages())
-                ->map(function ($value, $key) {
-                    return new DefaultError(
+                ->map(fn ($value, $key) => (
+                    new DefaultError(
                         'VALIDATION_ERROR',
                         __('Validation error'),
                         $value[0],
                         ['pointer' => $key]
-                    );
-                })->toArray();
+                    )
+                ))->values()->toArray();
 
             return ErrorResponse::make($defaultErrors, 422);
         });
