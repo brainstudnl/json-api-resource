@@ -2,7 +2,7 @@
 
 namespace Brainstud\JsonApi\Exceptions;
 
-class ContentTooLarge extends JsonApiHttpException
+class ContentTooLargeJsonApiException extends JsonApiHttpException
 {
     public function __construct(?string $title = 'Content too large', string $message = 'The request is too large to process.', ?\Throwable $previous = null, int $code = 0, array $headers = [])
     {
