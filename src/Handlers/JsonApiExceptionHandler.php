@@ -4,6 +4,7 @@ namespace Brainstud\JsonApi\Handlers;
 
 use Brainstud\JsonApi\Exceptions\BadRequestJsonApiException;
 use Brainstud\JsonApi\Exceptions\JsonApiExceptionInterface;
+use Brainstud\JsonApi\Exceptions\MethodNotAllowedJsonApiException;
 use Brainstud\JsonApi\Exceptions\NotFoundJsonApiException;
 use Brainstud\JsonApi\Responses\ErrorResponse;
 use Brainstud\JsonApi\Responses\Errors\DefaultError;
@@ -14,6 +15,8 @@ use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 use Throwable;
 
 /**
@@ -46,6 +49,14 @@ class JsonApiExceptionHandler extends ExceptionHandler
                 $exception->getPrevious(),
                 $exception->getCode(),
             ))->withErrorName('LAZY_LOADING_VIOLATION');
+        });
+
+        $this->map(function (MethodNotAllowedHttpException|MethodNotAllowedException $exception) {
+            return (new MethodNotAllowedJsonApiException(
+                message: $exception->getMessage(),
+                previous: $exception->getPrevious(),
+                code: $exception->getCode(),
+            ))->withErrorName('METHOD_NOT_ALLOWED');
         });
 
         $this->renderable(function (JsonApiExceptionInterface $exception) {
