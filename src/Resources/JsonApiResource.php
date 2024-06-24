@@ -125,7 +125,7 @@ abstract class JsonApiResource extends JsonResource
      */
     public function addMeta(array $data): self
     {
-        if (array_is_list($data)) {
+        if (! empty($data) && array_is_list($data)) {
             throw new \InvalidArgumentException('Metadata should be an associative array, i.e. ["key" => "value"]');
         }
 

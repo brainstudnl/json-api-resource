@@ -1,6 +1,7 @@
 /vendor/
 /.idea/
 /.vscode/
+/.zed/
 
 
 .phpunit.result.cache
