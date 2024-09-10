@@ -63,8 +63,10 @@ abstract class JsonApiResource extends JsonResource
         parent::__construct($resource);
 
         $this->resourceDepth = $resourceDepth ?? 0;
-        $this->resourceRegistrationData = $this->register();
-        $this->resourceKey = "{$this->resourceRegistrationData['type']}.{$this->resourceRegistrationData['id']}";
+        if ($this->register() !== []) {
+            $this->resourceRegistrationData = $this->register();
+            $this->resourceKey = "{$this->resourceRegistrationData['type']}.{$this->resourceRegistrationData['id']}";
+        }
 
         if ($this->resourceDepth < $this->maxResourceDepth) {
             $this->mapRelationships();
@@ -92,6 +94,67 @@ abstract class JsonApiResource extends JsonResource
             return [];
         }
 
+        if (isset($this->resourceRegistrationData) && ! empty($this->resourceRegistrationData)) {
+            $response = $this->toArrayFromRegister($request);
+        } else {
+            $response = $this->toArrayFromMethods($request);
+        }
+
+        ray($response);
+
+        return $this->addToResponse($request, $response);
+    }
+
+    public function toArrayFromMethods(Request $request): array
+    {
+        return [
+            'id' => $this->getId(),
+            'type' => $this->getType(),
+            'attributes' => $this->toAttributes($request),
+            // TODO: add relationship functionality.
+            // 'relationships' => $this->mapRelationships($this->toRelationships($request)),
+            'meta' => $this->meta,
+            'links' => $this->toLinks($request),
+        ];
+    }
+
+    public function getId(): string
+    {
+        return $this->resource->{$this->resource->identifierAttributeName};
+    }
+
+    public function getType(): string
+    {
+        return $this->type;
+    }
+
+    protected function toAttributes(Request $request): array
+    {
+        return [];
+    }
+
+    protected function toRelationships(Request $request): array
+    {
+        return [];
+    }
+
+    protected function toMeta(Request $request): array
+    {
+        return [];
+    }
+
+    protected function toLinks(Request $request): array
+    {
+        return [];
+    }
+
+    /**
+     * toArrayFromRegister
+     *
+     * Create a response array from the registration data.
+     */
+    public function toArrayFromRegister(Request $request): array
+    {
         $response = [
             'id' => $this->resourceRegistrationData['id'],
             'type' => $this->resourceRegistrationData['type'],
@@ -110,7 +173,7 @@ abstract class JsonApiResource extends JsonResource
             $response['relationships'] = $this->resourceRelationshipReferences;
         }
 
-        return $this->addToResponse($request, $response);
+        return $response;
     }
 
     /**
