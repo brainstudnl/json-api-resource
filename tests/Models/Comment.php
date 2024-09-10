@@ -31,4 +31,9 @@ class Comment extends Model
     {
         return CommentFactory::new();
     }
+
+    public function getShowUrl(): string
+    {
+        return 'https://jsonapi.brainstud.dev/comments/'.$this->identifier;
+    }
 }

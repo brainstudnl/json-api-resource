@@ -6,6 +6,7 @@ use Brainstud\JsonApi\Tests\Models\Account;
 use Brainstud\JsonApi\Tests\Models\Comment;
 use Brainstud\JsonApi\Tests\Models\Post;
 use Brainstud\JsonApi\Tests\Resources\AccountResource;
+use Brainstud\JsonApi\Tests\Resources\MethodBasedResource;
 use Brainstud\JsonApi\Tests\Resources\PostResource;
 use Brainstud\JsonApi\Tests\TestCase;
 use Illuminate\Http\Request;
@@ -336,5 +337,28 @@ class JsonApiResourceTest extends TestCase
         $response->assertOk();
         $response->assertJsonFragment(['experienced_author' => false]);
         $response->assertJsonMissing(['experienced_author' => true]);
+    }
+
+    public function testFromMethodsCreation()
+    {
+        $comment = Comment::factory()->create();
+
+        Route::get('test-route', fn () => (
+            MethodBasedResource::make([Comment::first(), 2])->addMeta(['key' => 'value'])
+        ));
+
+        $response = $this->getJson('test-route?includes=hallo');
+
+        $response->assertOk();
+        $response->assertJsonFragment([
+            'id' => $comment->identifier,
+            'content' => $comment->content,
+            'meta' => [
+                'key' => 'value',
+            ],
+            'links' => [
+                'show' => $comment->getShowUrl(),
+            ],
+        ]);
     }
 }
