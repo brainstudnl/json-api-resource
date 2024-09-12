@@ -63,17 +63,19 @@ abstract class JsonApiResource extends JsonResource
         parent::__construct($resource);
 
         $this->resourceDepth = $resourceDepth ?? 0;
+
+        // This code below is kept to allow for backwards compatability with the 'old' `->register()` method
         if ($this->register() !== []) {
+
             $this->resourceRegistrationData = $this->register();
             $this->resourceKey = "{$this->resourceRegistrationData['type']}.{$this->resourceRegistrationData['id']}";
-        }
+            if ($this->resourceDepth < $this->maxResourceDepth) {
+                $this->mapRelationships($this->resourceRegistrationData['relationships']);
+            }
 
-        if ($this->resourceDepth < $this->maxResourceDepth) {
-            $this->mapRelationships();
-        }
-
-        if ($this->resourceDepth < ($this->maxResourceDepth - 1)) {
-            $this->addSubIncludes();
+            if ($this->resourceDepth < ($this->maxResourceDepth - 1)) {
+                $this->addSubIncludes();
+            }
         }
     }
 
@@ -100,52 +102,34 @@ abstract class JsonApiResource extends JsonResource
             $response = $this->toArrayFromMethods($request);
         }
 
-        ray($response);
-
         return $this->addToResponse($request, $response);
     }
 
     public function toArrayFromMethods(Request $request): array
     {
+        $this->resourceKey = "{$this->getType()}.{$this->getId()}";
+
         return [
             'id' => $this->getId(),
             'type' => $this->getType(),
             'attributes' => $this->toAttributes($request),
-            // TODO: add relationship functionality.
-            // 'relationships' => $this->mapRelationships($this->toRelationships($request)),
-            'meta' => $this->meta,
+            'relationships' => $this->mapToRelationships($this->toRelationships($request)),
+            'meta' => array_merge($this->toMeta($request), $this->meta),
             'links' => $this->toLinks($request),
         ];
     }
 
-    public function getId(): string
+    public function mapToRelationships(array $relationships): array
     {
-        return $this->resource->{$this->resource->identifierAttributeName};
-    }
+        if ($this->resourceDepth < $this->maxResourceDepth) {
+            $this->mapRelationships($relationships);
+        }
 
-    public function getType(): string
-    {
-        return $this->type;
-    }
+        if ($this->resourceDepth < ($this->maxResourceDepth - 1)) {
+            $this->addSubIncludes();
+        }
 
-    protected function toAttributes(Request $request): array
-    {
-        return [];
-    }
-
-    protected function toRelationships(Request $request): array
-    {
-        return [];
-    }
-
-    protected function toMeta(Request $request): array
-    {
-        return [];
-    }
-
-    protected function toLinks(Request $request): array
-    {
-        return [];
+        return $this->resourceRelationshipReferences ?? [];
     }
 
     /**
@@ -200,13 +184,13 @@ abstract class JsonApiResource extends JsonResource
     /**
      * Map all registered relationships to a resource
      */
-    private function mapRelationships(): void
+    private function mapRelationships(array $relationships): void
     {
-        if (empty($this->resourceRegistrationData['relationships'])) {
+        if (empty($relationships)) {
             return;
         }
 
-        foreach ($this->resourceRegistrationData['relationships'] as $relationKey => $relationData) {
+        foreach ($relationships as $relationKey => $relationData) {
             $this->mapSingleRelationship($relationKey, $relationData);
         }
     }
@@ -322,6 +306,8 @@ abstract class JsonApiResource extends JsonResource
      */
     private function addSubIncludes(): void
     {
+        ray('bonking')->trace();
+
         $this->getIncludedResources()->each(
             fn ($include) => $include->getIncludedResources()->each(
                 fn ($subInclude) => $this->addInclude($subInclude)
@@ -434,5 +420,35 @@ abstract class JsonApiResource extends JsonResource
     protected function addToResponse($request, array $response): array
     {
         return $response;
+    }
+
+    public function getId(): string
+    {
+        return $this->resource->{$this->resource->identifierAttributeName};
+    }
+
+    public function getType(): string
+    {
+        return $this->type;
+    }
+
+    protected function toAttributes(Request $request): array
+    {
+        return [];
+    }
+
+    protected function toRelationships(Request $request): array
+    {
+        return [];
+    }
+
+    protected function toMeta(Request $request): array
+    {
+        return [];
+    }
+
+    protected function toLinks(Request $request): array
+    {
+        return [];
     }
 }

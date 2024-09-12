@@ -341,17 +341,24 @@ class JsonApiResourceTest extends TestCase
 
     public function testFromMethodsCreation()
     {
-        $comment = Comment::factory()->create();
+        $account = Account::factory()->create();
+        $comment = Comment::factory()->for($account, 'commenter')->create();
 
-        Route::get('test-route', fn () => (
-            MethodBasedResource::make([Comment::first(), 2])->addMeta(['key' => 'value'])
+        Route::get('test-route', fn (Request $request) => (
+            MethodBasedResource::make([
+                Comment::with($request->query()['includes'])->first(),
+                2,
+            ])->addMeta([
+                'key' => 'value',
+            ])
         ));
 
-        $response = $this->getJson('test-route?includes=hallo');
+        $response = $this->getJson('test-route?includes=commenter');
 
         $response->assertOk();
         $response->assertJsonFragment([
             'id' => $comment->identifier,
+            'type' => 'comments',
             'content' => $comment->content,
             'meta' => [
                 'key' => 'value',
@@ -359,6 +366,15 @@ class JsonApiResourceTest extends TestCase
             'links' => [
                 'show' => $comment->getShowUrl(),
             ],
+            'relationships' => [
+                'commenter' => [
+                    'data' => [
+                        'type' => 'accounts',
+                        'id' => $account->identifier,
+                    ],
+                ],
+            ],
+            'included' => [$this->createJsonResource($account)],
         ]);
     }
 }
