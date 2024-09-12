@@ -88,7 +88,7 @@ class JsonApiExceptionHandlerTest extends TestCase
     public function testModelNotFoundException()
     {
         $request = $this->makeJsonRequest();
-        $exception = (new ModelNotFoundException())->setModel('TestModel');
+        $exception = (new ModelNotFoundException)->setModel('TestModel');
 
         $response = $this->handler->render($request, $exception);
 
@@ -135,7 +135,7 @@ class JsonApiExceptionHandlerTest extends TestCase
     {
         Config::set('app.debug', true);
         $request = $this->makeJsonRequest();
-        $exception = new PaymentRequiredJsonApiException();
+        $exception = new PaymentRequiredJsonApiException;
 
         $response = $this->handler->render($request, $exception);
 
@@ -149,7 +149,7 @@ class JsonApiExceptionHandlerTest extends TestCase
     {
         Config::set('app.debug', false);
         $request = $this->makeJsonRequest();
-        $exception = new PaymentRequiredJsonApiException();
+        $exception = new PaymentRequiredJsonApiException;
 
         $response = $this->handler->render($request, $exception);
 

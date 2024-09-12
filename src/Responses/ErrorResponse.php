@@ -20,7 +20,7 @@ class ErrorResponse extends AbstractResponse
      */
     public static function make($errors, $httpStatusCode = null): JsonResponse
     {
-        $self = new self();
+        $self = new self;
         $self->httpStatusCode = $httpStatusCode ?? self::$defaultHttpStatusCode;
         if (is_array($errors)) {
             $self->errors = array_map(function ($error) {
