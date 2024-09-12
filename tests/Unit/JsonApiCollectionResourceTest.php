@@ -6,7 +6,9 @@ use Brainstud\JsonApi\Tests\Models\Account;
 use Brainstud\JsonApi\Tests\Models\Comment;
 use Brainstud\JsonApi\Tests\Models\Post;
 use Brainstud\JsonApi\Tests\Resources\AccountResourceCollection;
+use Brainstud\JsonApi\Tests\Resources\MethodBasedResourceCollection;
 use Brainstud\JsonApi\Tests\TestCase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 class JsonApiCollectionResourceTest extends TestCase
@@ -118,5 +120,26 @@ class JsonApiCollectionResourceTest extends TestCase
         $accounts->each(function (Account $account) use ($response) {
             $response->assertJsonFragment(['meta' => ['hello' => $account->name]]);
         });
+    }
+
+    public function testFromMethodsCreation(): void
+    {
+        $account = Account::factory()->create();
+        $comments = Comment::factory(5)->for($account, 'commenter')->create();
+
+        Route::get('test-route', fn (Request $request) => (
+            MethodBasedResourceCollection::make(Comment::with($request->query()['include'])->get())
+        ));
+
+        $response = $this->getJson('test-route?include=commenter');
+
+        $response->assertOk();
+
+        // all comments included in response
+        foreach ($comments as $comment) {
+            $response->assertJsonFragment($this->createJsonResource($comment));
+        }
+
+        $response->assertJsonFragment(['included' => [$this->createJsonResource($account)]]);
     }
 }

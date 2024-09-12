@@ -11,11 +11,6 @@ class MethodBasedResource extends JsonApiResource
 {
     public string $type = 'comments';
 
-    protected function register(): array
-    {
-        return [];
-    }
-
     public function toAttributes(Request $request): array
     {
         return [

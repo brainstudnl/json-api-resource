@@ -9,12 +9,20 @@ use Illuminate\Support\Collection;
 class JsonApiResourceCollection extends ResourceCollection
 {
     /**
+     * @var Collection<int, JsonApiResource>
+     */
+    public $collection;
+
+    /**
      * Build the response
      *
      * @param  Request  $request
      */
     public function toArray($request): array
     {
+        if ($this->collection->first()->creationType === 'toArray') {
+            return parent::toArray($request);
+        }
         $response = [
             'data' => $this->collection,
         ];

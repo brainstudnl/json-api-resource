@@ -47,6 +47,8 @@ abstract class JsonApiResource extends JsonResource
      */
     private int $maxResourceDepth;
 
+    public string $creationType;
+
     /**
      * Construct with either a resource or an array with a resource and resource depth
      */
@@ -66,7 +68,7 @@ abstract class JsonApiResource extends JsonResource
 
         // This code below is kept to allow for backwards compatability with the 'old' `->register()` method
         if ($this->register() !== []) {
-
+            $this->creationType = 'register';
             $this->resourceRegistrationData = $this->register();
             $this->resourceKey = "{$this->resourceRegistrationData['type']}.{$this->resourceRegistrationData['id']}";
             if ($this->resourceDepth < $this->maxResourceDepth) {
@@ -76,13 +78,10 @@ abstract class JsonApiResource extends JsonResource
             if ($this->resourceDepth < ($this->maxResourceDepth - 1)) {
                 $this->addSubIncludes();
             }
+        } else {
+            $this->creationType = 'toArray';
         }
     }
-
-    /**
-     * Register the resource definition
-     */
-    abstract protected function register(): array;
 
     /**
      * Build the response
@@ -424,7 +423,7 @@ abstract class JsonApiResource extends JsonResource
 
     public function getId(): string
     {
-        return $this->resource->{$this->resource->identifierAttributeName};
+        return $this->resource->{$this->identifierAttributeName};
     }
 
     public function getType(): string
@@ -448,6 +447,16 @@ abstract class JsonApiResource extends JsonResource
     }
 
     protected function toLinks(Request $request): array
+    {
+        return [];
+    }
+
+    /**
+     * Register the resource definition'
+     *
+     * @deprecated Use method based resource definitions instead.
+     */
+    protected function register(): array
     {
         return [];
     }
