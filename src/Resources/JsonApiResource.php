@@ -11,7 +11,7 @@ abstract class JsonApiResource extends JsonResource
     /**
      * The registered resource data
      */
-    private array $resourceRegistrationData;
+    private array $registrationData;
 
     /**
      * The relation references of this resource
@@ -47,6 +47,9 @@ abstract class JsonApiResource extends JsonResource
      */
     private int $maxResourceDepth;
 
+    /**
+     * The way the resource is created. register|toArray.
+     */
     public string $creationType;
 
     /**
@@ -67,12 +70,11 @@ abstract class JsonApiResource extends JsonResource
         $this->resourceDepth = $resourceDepth ?? 0;
 
         // This code below is kept to allow for backwards compatability with the 'old' `->register()` method
-        if ($this->register() !== []) {
+        if (($this->registrationData = $this->register()) !== []) {
             $this->creationType = 'register';
-            $this->resourceRegistrationData = $this->register();
-            $this->resourceKey = "{$this->resourceRegistrationData['type']}.{$this->resourceRegistrationData['id']}";
+            $this->resourceKey = "{$this->registrationData['type']}.{$this->registrationData['id']}";
             if ($this->resourceDepth < $this->maxResourceDepth) {
-                $this->mapRelationships($this->resourceRegistrationData['relationships']);
+                $this->mapRelationships($this->registrationData['relationships']);
             }
 
             if ($this->resourceDepth < ($this->maxResourceDepth - 1)) {
@@ -95,7 +97,7 @@ abstract class JsonApiResource extends JsonResource
             return [];
         }
 
-        if (isset($this->resourceRegistrationData) && ! empty($this->resourceRegistrationData)) {
+        if (isset($this->registrationData) && ! empty($this->registrationData)) {
             $response = $this->toArrayFromRegister($request);
         } else {
             $response = $this->toArrayFromMethods($request);
@@ -139,17 +141,17 @@ abstract class JsonApiResource extends JsonResource
     public function toArrayFromRegister(Request $request): array
     {
         $response = [
-            'id' => $this->resourceRegistrationData['id'],
-            'type' => $this->resourceRegistrationData['type'],
+            'id' => $this->registrationData['id'],
+            'type' => $this->registrationData['type'],
             'attributes' => $this->getAttributes($request),
         ];
 
-        if (! empty($this->resourceRegistrationData['meta']) || ! empty($this->meta)) {
-            $response['meta'] = array_merge($this->resourceRegistrationData['meta'] ?? [], $this->meta);
+        if (! empty($this->registrationData['meta']) || ! empty($this->meta)) {
+            $response['meta'] = array_merge($this->registrationData['meta'] ?? [], $this->meta);
         }
 
-        if (! empty($this->resourceRegistrationData['links'])) {
-            $response['links'] = $this->resourceRegistrationData['links'];
+        if (! empty($this->registrationData['links'])) {
+            $response['links'] = $this->registrationData['links'];
         }
 
         if (! empty($this->resourceRelationshipReferences)) {
@@ -340,9 +342,9 @@ abstract class JsonApiResource extends JsonResource
         if (! $second) {
             return $this;
         }
-        $this->resourceRegistrationData = array_replace_recursive(
-            $this->resourceRegistrationData,
-            $second->resourceRegistrationData,
+        $this->registrationData = array_replace_recursive(
+            $this->registrationData,
+            $second->registrationData,
         );
 
         $this->resourceRelationshipReferences = array_replace_recursive(
@@ -372,8 +374,8 @@ abstract class JsonApiResource extends JsonResource
      */
     private function getAttributes(Request $request): array
     {
-        $attributes = $this->resourceRegistrationData['attributes'];
-        $type = $this->resourceRegistrationData['type'];
+        $attributes = $this->registrationData['attributes'];
+        $type = $this->registrationData['type'];
 
         if (! ($fieldSet = $request->query('fields'))
             || ! array_key_exists($type, $fieldSet)
@@ -391,8 +393,8 @@ abstract class JsonApiResource extends JsonResource
     public function toRelationshipReferenceArray(): array
     {
         return [
-            'id' => $this->resourceRegistrationData['id'],
-            'type' => $this->resourceRegistrationData['type'],
+            'id' => $this->registrationData['id'],
+            'type' => $this->registrationData['type'],
         ];
     }
 
