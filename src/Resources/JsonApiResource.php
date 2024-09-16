@@ -165,7 +165,7 @@ abstract class JsonApiResource extends JsonResource
         }
 
         // Is this relation a collection or a single resource
-        if (is_subclass_of($resourceClass, JsonApiCollectionResource::class)) {
+        if (is_subclass_of($resourceClass, JsonApiResourceCollection::class)) {
             $this->addResourceCollectionRelation($relationKey, $resourceData, $resourceClass);
 
             return;
@@ -225,7 +225,7 @@ abstract class JsonApiResource extends JsonResource
             return false;
         }
 
-        if (is_subclass_of($resourceClass, JsonApiCollectionResource::class)
+        if (is_subclass_of($resourceClass, JsonApiResourceCollection::class)
             && $resourceData->isEmpty()
         ) {
             return false;

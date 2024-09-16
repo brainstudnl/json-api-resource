@@ -17,7 +17,7 @@ class PostResource extends JsonApiResource
             ],
             'relationships' => [
                 'author' => ['author', AccountResource::class],
-                'comments' => ['comments', CommentCollectionResource::class],
+                'comments' => ['comments', CommentResourceCollection::class],
             ],
         ];
 
