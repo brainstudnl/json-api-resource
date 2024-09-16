@@ -12,10 +12,7 @@ trait Meta
     public array $meta = [];
 
     /**
-     * Get the meta for the resource
-     *
-     * If the resource is defined via a `register` method, this wile use
-     * registration data. Else return the value of `toAttributes`.
+     * Get the metadata for the resource.
      */
     private function getMeta($request): array
     {

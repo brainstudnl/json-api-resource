@@ -9,15 +9,22 @@ use Illuminate\Support\Collection;
 trait Relationships
 {
     /**
-     * Get the relationships for the resource
-     *
-     * If the resource is defined via a `register` method, this wile use
-     * registration data. Else return the value of `toAttributes`.
+     * The relation references of this resource
+     */
+    private array $relationshipReferences = [];
+
+    /**
+     * The included resources that the relation references are referencing
+     */
+    public array $included = [];
+
+    /**
+     * Get the relationships for the resource.
      */
     private function getRelationships($request): array
     {
         return $this->isRegistered()
-            ? $this->resourceRelationshipReferences
+            ? $this->relationshipReferences
             : $this->processRelationships($this->toRelationships($request));
     }
 
@@ -31,7 +38,7 @@ trait Relationships
             $this->addSubIncludes();
         }
 
-        return $this->resourceRelationshipReferences ?? [];
+        return $this->relationshipReferences ?? [];
     }
 
     /**
@@ -94,7 +101,7 @@ trait Relationships
             $relationshipReferences[] = $includedResource->toRelationshipReferenceArray();
         }
 
-        $this->resourceRelationshipReferences[$relationKey] = [
+        $this->relationshipReferences[$relationKey] = [
             'data' => $relationshipReferences,
         ];
     }
@@ -111,7 +118,7 @@ trait Relationships
 
         $this->addInclude($includedResource);
 
-        $this->resourceRelationshipReferences[$relationKey] = [
+        $this->relationshipReferences[$relationKey] = [
             'data' => $includedResource->toRelationshipReferenceArray(),
         ];
     }
@@ -159,8 +166,6 @@ trait Relationships
      */
     private function addSubIncludes(): void
     {
-        ray('bonking')->trace();
-
         $this->getIncludedResources()->each(
             fn ($include) => $include->getIncludedResources()->each(
                 fn ($subInclude) => $this->addInclude($subInclude)
@@ -199,9 +204,9 @@ trait Relationships
             $second->registrationData,
         );
 
-        $this->resourceRelationshipReferences = array_replace_recursive(
-            $this->resourceRelationshipReferences,
-            $second->resourceRelationshipReferences,
+        $this->relationshipReferences = array_replace_recursive(
+            $this->relationshipReferences,
+            $second->relationshipReferences,
         );
 
         return $this;

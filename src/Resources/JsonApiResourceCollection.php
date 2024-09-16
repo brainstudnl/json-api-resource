@@ -20,14 +20,15 @@ class JsonApiResourceCollection extends ResourceCollection
      */
     public function toArray($request): array
     {
-        if ($this->collection->first()->creationType === 'toArray') {
-            return parent::toArray($request);
-        }
-        $response = [
-            'data' => $this->collection,
-        ];
+        if ($this->collection->first()->isRegistered()) {
+            $response = [
+                'data' => $this->collection,
+            ];
 
-        return $this->addToResponse($request, $response);
+            return $this->addToResponse($request, $response);
+        }
+
+        return parent::toArray($request);
     }
 
     /**

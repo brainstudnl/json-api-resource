@@ -2,10 +2,7 @@
 
 namespace Brainstud\JsonApi\Resources;
 
-use Brainstud\JsonApi\Traits\Attributes;
-use Brainstud\JsonApi\Traits\Links;
-use Brainstud\JsonApi\Traits\Meta;
-use Brainstud\JsonApi\Traits\Relationships;
+use Brainstud\JsonApi\Traits;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Arr;
@@ -15,33 +12,23 @@ use Illuminate\Support\Arr;
  */
 abstract class JsonApiResource extends JsonResource
 {
-    use Attributes;
-    use Links;
-    use Meta;
-    use Relationships;
+    use Traits\Attributes;
+    use Traits\Links;
+    use Traits\Meta;
+    use Traits\Relationships;
 
     /**
-     * The registered resource data
+     * The registered resource data.
      */
     private array $registrationData;
 
     /**
-     * The relation references of this resource
-     */
-    private array $resourceRelationshipReferences = [];
-
-    /**
-     * The included resources that the relation references are referencing
-     */
-    public array $included = [];
-
-    /**
-     * The unique key of this resource
+     * The unique key of this resource.
      */
     public string $resourceKey;
 
     /**
-     * The max relationship depth of this resource
+     * The max relationship depth of this resource.
      *
      * @var int|mixed
      */
@@ -55,10 +42,10 @@ abstract class JsonApiResource extends JsonResource
     /**
      * The way the resource is created. register|toArray.
      */
-    public string $creationType;
+    private string $creationType;
 
     /**
-     * Construct with either a resource or an array with a resource and resource depth
+     * Construct with either a resource or an array with a resource and resource depth.
      */
     public function __construct($jsonApiResourceData)
     {
@@ -87,7 +74,7 @@ abstract class JsonApiResource extends JsonResource
     }
 
     /**
-     * Build the response
+     * Build the response.
      *
      * @param  Request  $request
      * @return array The response
@@ -111,7 +98,7 @@ abstract class JsonApiResource extends JsonResource
     }
 
     /**
-     * Include the loaded relations
+     * Include the loaded relations.
      *
      * @param  Request  $request
      */
@@ -166,7 +153,7 @@ abstract class JsonApiResource extends JsonResource
     }
 
     /**
-     * Register the resource definition'
+     * Register the resource definition.
      *
      * @deprecated Use method based resource definitions instead.
      */
@@ -175,7 +162,7 @@ abstract class JsonApiResource extends JsonResource
         return [];
     }
 
-    protected function isRegistered(): bool
+    public function isRegistered(): bool
     {
         return $this->creationType === 'register';
     }
