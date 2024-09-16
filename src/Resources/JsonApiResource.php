@@ -5,6 +5,7 @@ namespace Brainstud\JsonApi\Resources;
 use Brainstud\JsonApi\Traits\Attributes;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 /**
@@ -75,10 +76,12 @@ abstract class JsonApiResource extends JsonResource
 
         $this->resourceDepth = $resourceDepth ?? 0;
 
+        $this->registrationData = $this->register();
+
         // This code below is kept to allow for backwards compatability with the 'old' `->register()` method
-        if (($this->registrationData = $this->register()) !== []) {
+        if ($this->registrationData !== []) {
             $this->creationType = 'register';
-            $this->resourceKey = "{$this->registrationData['type']}.{$this->registrationData['id']}";
+            $this->resourceKey = "{$this->getType()}.{$this->getId()}";
             if ($this->resourceDepth < $this->maxResourceDepth) {
                 $this->mapRelationships($this->registrationData['relationships']);
             }
@@ -103,27 +106,16 @@ abstract class JsonApiResource extends JsonResource
             return [];
         }
 
-        if (isset($this->registrationData) && ! empty($this->registrationData)) {
-            $response = $this->toArrayFromRegister($request);
-        } else {
-            $response = $this->toArrayFromMethods($request);
-        }
-
-        return $this->addToResponse($request, $response);
-    }
-
-    public function toArrayFromMethods(Request $request): array
-    {
-        $this->resourceKey = "{$this->getType()}.{$this->getId()}";
-
-        return [
+        $response = Arr::where([
             'id' => $this->getId(),
             'type' => $this->getType(),
-            'attributes' => $this->toAttributes($request),
-            'relationships' => $this->mapToRelationships($this->toRelationships($request)),
+            'attributes' => $this->getAttributes($request),
+            'relationships' => ! empty($this->resourceRelationshipReferences) ? $this->resourceRelationshipReferences : $this->mapToRelationships($this->toRelationships($request)),
             'meta' => array_merge($this->toMeta($request), $this->meta),
             'links' => $this->toLinks($request),
-        ];
+        ], fn ($value) => ! empty($value));
+
+        return $this->addToResponse($request, $response);
     }
 
     public function mapToRelationships(array $relationships): array
@@ -137,34 +129,6 @@ abstract class JsonApiResource extends JsonResource
         }
 
         return $this->resourceRelationshipReferences ?? [];
-    }
-
-    /**
-     * toArrayFromRegister
-     *
-     * Create a response array from the registration data.
-     */
-    public function toArrayFromRegister(Request $request): array
-    {
-        $response = [
-            'id' => $this->registrationData['id'],
-            'type' => $this->registrationData['type'],
-            'attributes' => $this->getAttributes($request),
-        ];
-
-        if (! empty($this->registrationData['meta']) || ! empty($this->meta)) {
-            $response['meta'] = array_merge($this->registrationData['meta'] ?? [], $this->meta);
-        }
-
-        if (! empty($this->registrationData['links'])) {
-            $response['links'] = $this->registrationData['links'];
-        }
-
-        if (! empty($this->resourceRelationshipReferences)) {
-            $response['relationships'] = $this->resourceRelationshipReferences;
-        }
-
-        return $response;
     }
 
     /**
@@ -377,8 +341,8 @@ abstract class JsonApiResource extends JsonResource
     public function toRelationshipReferenceArray(): array
     {
         return [
-            'id' => $this->registrationData['id'],
-            'type' => $this->registrationData['type'],
+            'id' => $this->getId(),
+            'type' => $this->getType(),
         ];
     }
 
@@ -409,32 +373,32 @@ abstract class JsonApiResource extends JsonResource
 
     public function getId(): string
     {
-        return $this->resource->{$this->identifierAttributeName};
+        return $this->registrationData['id'] ?? $this->resource->{$this->identifierAttributeName};
     }
 
     public function getType(): string
     {
-        return $this->type;
+        return $this->registrationData['type'] ?? $this->type;
     }
 
     protected function toAttributes(Request $request): array
     {
-        return [];
+        return $this->registrationData['attributes'] ?? [];
     }
 
     protected function toRelationships(Request $request): array
     {
-        return [];
+        return $this->registrationData['relationships'] ?? [];
     }
 
     protected function toMeta(Request $request): array
     {
-        return [];
+        return $this->registrationData['meta'] ?? [];
     }
 
     protected function toLinks(Request $request): array
     {
-        return [];
+        return $this->registrationData['links'] ?? [];
     }
 
     /**
