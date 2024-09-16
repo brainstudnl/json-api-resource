@@ -8,7 +8,6 @@ class AccountResource extends JsonApiResource
 {
     protected function register(): array
     {
-
         $data = [
             'id' => $this->resource->identifier,
             'type' => 'accounts',
@@ -16,8 +15,8 @@ class AccountResource extends JsonApiResource
                 'name' => $this->resource->name,
             ],
             'relationships' => [
-                'posts' => ['posts', PostCollectionResource::class],
-                'comments' => ['comments', CommentCollectionResource::class],
+                'posts' => ['posts', PostResourceCollection::class],
+                'comments' => ['comments', CommentResourceCollection::class],
             ],
         ];
 

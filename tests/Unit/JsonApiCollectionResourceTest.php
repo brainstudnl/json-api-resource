@@ -5,7 +5,7 @@ namespace Brainstud\JsonApi\Tests\Unit;
 use Brainstud\JsonApi\Tests\Models\Account;
 use Brainstud\JsonApi\Tests\Models\Comment;
 use Brainstud\JsonApi\Tests\Models\Post;
-use Brainstud\JsonApi\Tests\Resources\AccountCollectionResource;
+use Brainstud\JsonApi\Tests\Resources\AccountResourceCollection;
 use Brainstud\JsonApi\Tests\TestCase;
 use Illuminate\Support\Facades\Route;
 
@@ -15,7 +15,7 @@ class JsonApiCollectionResourceTest extends TestCase
     {
         $accounts = Account::factory()->count(3)->create();
 
-        Route::get('test-route', fn () => AccountCollectionResource::make(Account::all()));
+        Route::get('test-route', fn () => AccountResourceCollection::make(Account::all()));
         $response = $this->getJson('test-route');
 
         $response->assertExactJson([
@@ -33,7 +33,7 @@ class JsonApiCollectionResourceTest extends TestCase
         $others = Account::factory()->count(3)->create();
         $author = Account::factory()->has(Post::factory())->create();
 
-        Route::get('test-route', fn () => AccountCollectionResource::make(Account::with('posts')->get()));
+        Route::get('test-route', fn () => AccountResourceCollection::make(Account::with('posts')->get()));
         $response = $this->getJson('test-route?include=posts');
 
         $response->assertExactJson([
@@ -83,7 +83,7 @@ class JsonApiCollectionResourceTest extends TestCase
             'posts.comments.commenter',
         ];
 
-        Route::get('test-route', fn () => AccountCollectionResource::make([[Account::with($includes)->find(2), 3]]));
+        Route::get('test-route', fn () => AccountResourceCollection::make([[Account::with($includes)->find(2), 3]]));
         $response = $this->getJson('test-route?include'.implode(',', $includes));
 
         $response->assertExactJson([
@@ -107,7 +107,7 @@ class JsonApiCollectionResourceTest extends TestCase
 
         Route::get(
             'test-route',
-            fn () => AccountCollectionResource::make(Account::all())
+            fn () => AccountResourceCollection::make(Account::all())
                 ->addMetaToResources(
                     fn (Account $model) => ['hello' => $model->name]
                 )
