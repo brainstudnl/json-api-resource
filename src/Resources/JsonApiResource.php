@@ -3,6 +3,7 @@
 namespace Brainstud\JsonApi\Resources;
 
 use Brainstud\JsonApi\Traits\Attributes;
+use Brainstud\JsonApi\Traits\Links;
 use Brainstud\JsonApi\Traits\Meta;
 use Brainstud\JsonApi\Traits\Relationships;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ use Illuminate\Support\Arr;
 abstract class JsonApiResource extends JsonResource
 {
     use Attributes;
+    use Links;
     use Meta;
     use Relationships;
 
@@ -102,7 +104,7 @@ abstract class JsonApiResource extends JsonResource
             'attributes' => $this->getAttributes($request),
             'relationships' => $this->getRelationships($request),
             'meta' => $this->getMeta($request),
-            'links' => $this->toLinks($request),
+            'links' => $this->getLinks($request),
         ], fn ($value) => ! empty($value));
 
         return $this->addToResponse($request, $response);
