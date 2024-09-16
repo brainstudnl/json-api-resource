@@ -3,6 +3,7 @@
 namespace Brainstud\JsonApi\Resources;
 
 use Brainstud\JsonApi\Traits\Attributes;
+use Brainstud\JsonApi\Traits\Meta;
 use Brainstud\JsonApi\Traits\Relationships;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -14,6 +15,7 @@ use Illuminate\Support\Arr;
 abstract class JsonApiResource extends JsonResource
 {
     use Attributes;
+    use Meta;
     use Relationships;
 
     /**
@@ -42,13 +44,6 @@ abstract class JsonApiResource extends JsonResource
      * @var int|mixed
      */
     public int $resourceDepth = 0;
-
-    /**
-     * Metadata for the resource
-     *
-     * NOTE: this differs from `additional` on JsonResource which adds to the response.
-     */
-    public array $meta = [];
 
     /**
      * The maximum amount of (sub) includes to include.
@@ -106,32 +101,11 @@ abstract class JsonApiResource extends JsonResource
             'type' => $this->getType(),
             'attributes' => $this->getAttributes($request),
             'relationships' => $this->getRelationships($request),
-            'meta' => array_merge($this->toMeta($request), $this->meta),
+            'meta' => $this->getMeta($request),
             'links' => $this->toLinks($request),
         ], fn ($value) => ! empty($value));
 
         return $this->addToResponse($request, $response);
-    }
-
-    /**
-     * Add metadata to the resource.
-     *
-     * Saves the given data to the `$meta` property.
-     * Please note that this metadata overwrites any added metadata from the `register()` function.
-     *
-     * @param  array  $data  An associative array to add to the metadata
-     *
-     * @throws \InvalidArgumentException if a non-associative array is given to the function
-     */
-    public function addMeta(array $data): self
-    {
-        if (! empty($data) && array_is_list($data)) {
-            throw new \InvalidArgumentException('Metadata should be an associative array, i.e. ["key" => "value"]');
-        }
-
-        $this->meta = array_merge($this->meta, $data);
-
-        return $this;
     }
 
     /**
