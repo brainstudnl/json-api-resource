@@ -2,12 +2,18 @@
 
 namespace Brainstud\JsonApi\Resources;
 
+use Brainstud\JsonApi\Traits\Attributes;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
 
+/**
+ * @mixin Attributes
+ */
 abstract class JsonApiResource extends JsonResource
 {
+    use Attributes;
+
     /**
      * The registered resource data
      */
@@ -366,28 +372,6 @@ abstract class JsonApiResource extends JsonResource
     }
 
     /**
-     * getAttributes.
-     *
-     * Assembles the attributes as requested, based on the information provided.
-     *
-     * @return mixed
-     */
-    private function getAttributes(Request $request): array
-    {
-        $attributes = $this->registrationData['attributes'];
-        $type = $this->registrationData['type'];
-
-        if (! ($fieldSet = $request->query('fields'))
-            || ! array_key_exists($type, $fieldSet)
-            || ! ($fields = explode(',', $fieldSet[$type]))
-        ) {
-            return $attributes;
-        }
-
-        return array_filter($attributes, fn ($key) => in_array($key, $fields), ARRAY_FILTER_USE_KEY);
-    }
-
-    /**
      * Create a relationship reference
      */
     public function toRelationshipReferenceArray(): array
@@ -461,5 +445,10 @@ abstract class JsonApiResource extends JsonResource
     protected function register(): array
     {
         return [];
+    }
+
+    public function isRegistered(): bool
+    {
+        return $this->creationType === 'register';
     }
 }
