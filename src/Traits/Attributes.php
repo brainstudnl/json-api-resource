@@ -19,6 +19,12 @@ trait Attributes
         return $this->toAttributes($request);
     }
 
+    /**
+     * Get attributes of the resource from the `registrationData`.
+     *
+     * This method also takes an optional query parameter `fields` into account.
+     * If the parameter is set, it only returns those fields in the attributes.
+     */
     private function getRegisteredAttributes($request): array
     {
         $attributes = $this->registrationData['attributes'];

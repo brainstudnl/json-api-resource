@@ -28,7 +28,15 @@ trait Relationships
             : $this->processRelationships($this->toRelationships($request));
     }
 
-    public function processRelationships(array $relationships): array
+    /**
+     * Process the relationships of the resource.
+     *
+     * This method adds the relationships and includes for a given resource.
+     * It also takes into account a resourceDepth and maxResourceDepth.
+     * This way, you can controll how 'deep' you want nesteds resources
+     * to be included in the response.
+     */
+    private function processRelationships(array $relationships): array
     {
         if ($this->resourceDepth < $this->maxResourceDepth) {
             $this->mapRelationships($relationships);

@@ -67,6 +67,8 @@ abstract class JsonApiResource extends JsonResource
         if ($this->registrationData !== []) {
             $this->creationType = 'register';
             $this->resourceKey = "{$this->getType()}.{$this->getId()}";
+            // This is still needed here as the includes will otherwise not be filled
+            // correctly in resources created with the `register` method.
             $this->processRelationships($this->registrationData['relationships']);
         } else {
             $this->creationType = 'toArray';
@@ -122,31 +124,67 @@ abstract class JsonApiResource extends JsonResource
         return $response;
     }
 
-    public function getId(): string
+    /**
+     * Get the id of the resource.
+     *
+     * Default to either `registrationData['id']` or an
+     * `identifier` field on the resource.
+     */
+    protected function getId(): string
     {
-        return $this->registrationData['id'] ?? $this->resource->{$this->identifierAttributeName};
+        return $this->registrationData['id'] ?? $this->resource->identifier;
     }
 
-    public function getType(): string
+    /**
+     * Get the id of the resource.
+     *
+     * Default to either `registrationData['type']` or a
+     * `type` field on the resource.
+     */
+    protected function getType(): string
     {
         return $this->registrationData['type'] ?? $this->type;
     }
 
+    /**
+     * Define the attributes for the resource.
+     *
+     * Default to either `registrationData['attributes']` or an empty array.
+     * Should be overwritten to create custom attributes.
+     */
     protected function toAttributes(Request $request): array
     {
         return $this->registrationData['attributes'] ?? [];
     }
 
+    /**
+     * Define the relationships for the resource.
+     *
+     * Default to either `registrationData['relationships']` or an empty array.
+     * Should be overwritten to create custom relationships.
+     */
     protected function toRelationships(Request $request): array
     {
         return $this->registrationData['relationships'] ?? [];
     }
 
+    /**
+     * Define the metadata for the resource.
+     *
+     * Default to either `registrationData['meta']` or an empty array.
+     * Should be overwritten to create custom metadata.
+     */
     protected function toMeta(Request $request): array
     {
         return $this->registrationData['meta'] ?? [];
     }
 
+    /**
+     * Define the links for the resource.
+     *
+     * Default to either `registrationData['links']` or an empty array.
+     * Should be overwritten to create custom links.
+     */
     protected function toLinks(Request $request): array
     {
         return $this->registrationData['links'] ?? [];
@@ -162,6 +200,9 @@ abstract class JsonApiResource extends JsonResource
         return [];
     }
 
+    /**
+     * Check if the resource is created via the `register()` method.
+     */
     public function isRegistered(): bool
     {
         return $this->creationType === 'register';
