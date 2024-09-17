@@ -23,9 +23,7 @@ trait Relationships
      */
     private function getRelationships($request): array
     {
-        return $this->isRegistered()
-            ? $this->relationshipReferences
-            : $this->processRelationships($this->toRelationships($request));
+        return $this->relationshipReferences;
     }
 
     /**
