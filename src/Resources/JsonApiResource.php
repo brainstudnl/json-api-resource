@@ -62,11 +62,11 @@ abstract class JsonApiResource extends JsonResource
         $this->resourceDepth = $resourceDepth ?? 0;
 
         $this->registrationData = $this->register();
+        $this->resourceKey = "{$this->getType()}.{$this->getId()}";
 
         // This code below is kept to allow for backwards compatability with the 'old' `->register()` method
         if ($this->registrationData !== []) {
             $this->creationType = 'register';
-            $this->resourceKey = "{$this->getType()}.{$this->getId()}";
             // This is still needed here as the includes will otherwise not be filled
             // correctly in resources created with the `register` method.
             $this->processRelationships($this->registrationData['relationships']);
