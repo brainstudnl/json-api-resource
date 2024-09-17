@@ -2,6 +2,8 @@
 
 namespace Brainstud\JsonApi\Traits;
 
+use Illuminate\Http\Request;
+
 trait Attributes
 {
     /**
@@ -12,24 +14,24 @@ trait Attributes
      */
     private function getAttributes($request): array
     {
-        if ($this->isRegistered()) {
-            return $this->getRegisteredAttributes($request);
-        }
-
-        return $this->toAttributes($request);
+        return $this->getFilteredAttributes(
+            $request,
+            $this->toAttributes($request),
+            $this->getType(),
+        );
     }
 
     /**
-     * Get attributes of the resource from the `registrationData`.
+     * Get filtered attributes.
      *
      * This method also takes an optional query parameter `fields` into account.
      * If the parameter is set, it only returns those fields in the attributes.
      */
-    private function getRegisteredAttributes($request): array
+    private function getFilteredAttributes(
+        Request $request,
+        array $attributes,
+        string $type): array
     {
-        $attributes = $this->registrationData['attributes'];
-        $type = $this->registrationData['type'];
-
         if (! ($fieldSet = $request->query('fields'))
             || ! array_key_exists($type, $fieldSet)
             || ! ($fields = explode(',', $fieldSet[$type]))
