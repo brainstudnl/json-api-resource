@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('accounts', function (Blueprint $table): void {
+        Schema::create('developers', function (Blueprint $table): void {
             $table->id();
             $table->string('identifier');
             $table->string('name');
@@ -16,31 +16,31 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('posts', function (Blueprint $table): void {
+        Schema::create('pull_requests', function (Blueprint $table): void {
             $table->id();
             $table->string('identifier');
             $table->string('title');
             $table->string('url')->nullable();
-            $table->string('content')->nullable();
-            $table->foreignId('author_id')
+            $table->string('description')->nullable();
+            $table->foreignId('developer_id')
                 ->references('id')
-                ->on('accounts')
+                ->on('developers')
                 ->onDelete('cascade');
             $table->timestamps();
         });
 
-        Schema::create('comments', function (Blueprint $table): void {
+        Schema::create('reviews', function (Blueprint $table): void {
             $table->id();
             $table->string('identifier');
-            $table->string('content');
-            $table->foreignId('account_id')
+            $table->text('content');
+            $table->foreignId('reviewer_id')
                 ->references('id')
-                ->on('accounts')
+                ->on('developers')
                 ->onDelete('cascade');
 
-            $table->foreignId('post_id')
+            $table->foreignId('pull_request_id')
                 ->references('id')
-                ->on('posts')
+                ->on('pull_requests')
                 ->onDelete('cascade');
             $table->timestamps();
         });
