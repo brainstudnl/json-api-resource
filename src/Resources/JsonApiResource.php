@@ -55,24 +55,20 @@ abstract class JsonApiResource extends JsonResource
             [$resource, $maxResourceDepth, $resourceDepth] = array_pad($jsonApiResourceData, 3, null);
         }
 
-        $this->maxResourceDepth = $maxResourceDepth ?? 2;
-
         parent::__construct($resource);
 
+        $this->maxResourceDepth = $maxResourceDepth ?? 2;
         $this->resourceDepth = $resourceDepth ?? 0;
-
         $this->registrationData = $this->register();
         $this->resourceKey = "{$this->getType()}.{$this->getId()}";
+        $this->creationType = empty($this->registrationData) ? 'toArray' : 'register';
 
-        // This code below is kept to allow for backwards compatability with the 'old' `->register()` method
-        if ($this->registrationData !== []) {
-            $this->creationType = 'register';
-            // This is still needed here as the includes will otherwise not be filled
-            // correctly in resources created with the `register` method.
-            $this->processRelationships($this->registrationData['relationships']);
-        } else {
-            $this->creationType = 'toArray';
-        }
+        // We need to process the relationships on construct since we use the
+        // constructor only in resolving (sub) includes. We do not call
+        // the `toArray` method until the very last moment. Might be
+        // an option to refactor this. But then the whole relationship
+        // resolving code has to be refactored. Keeping it like this for now.
+        $this->processRelationships($this->toRelationships(request()));
     }
 
     /**
