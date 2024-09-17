@@ -35,8 +35,6 @@ class JsonApiResourceCollectionTest extends TestCase
         Route::get('test-route', fn () => DeveloperResourceCollection::make(Developer::with('pullRequests')->get()));
         $response = $this->getJson('test-route?inludes=pullRequests');
 
-        ray(json_decode($response->getContent(), true));
-
         $response->assertExactJson([
             'data' => [
                 ...$this->createJsonResource($others),

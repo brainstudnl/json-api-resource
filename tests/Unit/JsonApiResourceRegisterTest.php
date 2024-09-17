@@ -166,7 +166,6 @@ class JsonApiResourceRegisterTest extends TestCase
             AccountResource::make([Account::with(explode(',', $request->query()['includes']))->first(), 2])
         ));
         $response = $this->getJson('test-route?includes=posts,posts.author,posts.comments,posts.comments.commenter');
-        ray(json_decode($response->getContent(), true));
 
         $response->assertExactJson([
             'data' => $this->createJsonResource($postAuthor, ['posts' => [$post]]),
