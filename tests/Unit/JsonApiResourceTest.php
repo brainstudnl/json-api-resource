@@ -2,12 +2,11 @@
 
 namespace Brainstud\JsonApi\Tests\Unit;
 
-use Brainstud\JsonApi\Tests\Models\Account;
-use Brainstud\JsonApi\Tests\Models\Comment;
-use Brainstud\JsonApi\Tests\Models\Post;
-use Brainstud\JsonApi\Tests\Resources\AccountResource;
-use Brainstud\JsonApi\Tests\Resources\MethodBasedResource;
-use Brainstud\JsonApi\Tests\Resources\PostResource;
+use Brainstud\JsonApi\Tests\Models\Developer;
+use Brainstud\JsonApi\Tests\Models\PullRequest;
+use Brainstud\JsonApi\Tests\Models\Review;
+use Brainstud\JsonApi\Tests\Resources\DeveloperResource;
+use Brainstud\JsonApi\Tests\Resources\PullRequestResource;
 use Brainstud\JsonApi\Tests\TestCase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -16,41 +15,21 @@ class JsonApiResourceTest extends TestCase
 {
     public function testBasicResource()
     {
-        $account = Account::factory()->create();
+        $developer = Developer::factory()->create();
 
-        Route::get('test-route', fn () => AccountResource::make($account));
+        Route::get('test-route', fn () => DeveloperResource::make($developer));
         $response = $this->getJson('test-route');
 
-        $response->assertExactJson([
-            'data' => [
-                'id' => $account->identifier,
-                'type' => 'accounts',
-                'attributes' => [
-                    'name' => $account->name,
-                ],
-            ],
-        ]);
-    }
-
-    public function testBasicResourceCollection()
-    {
-        $accounts = Account::factory()->count(3)->create();
-
-        Route::get('test-route', fn () => AccountResource::collection($accounts));
-        $response = $this->getJson('test-route');
-
-        $response->assertExactJson([
-            'data' => $this->createJsonResource($accounts),
-        ]);
+        $response->assertExactJson(['data' => $this->createJsonResource($developer)]);
     }
 
     public function testResourceWithEmptyRelationLoaded()
     {
-        $account = Account::factory()
+        $account = Developer::factory()
             ->create();
 
         Route::get('test-route', fn () => (
-            AccountResource::make(Account::first()->load('posts'))
+            DeveloperResource::make(Developer::first()->load('pullRequests'))
         ));
         $response = $this->getJson('test-route');
 
@@ -59,258 +38,203 @@ class JsonApiResourceTest extends TestCase
         ]);
     }
 
-    public function testRelatedResource()
+    public function testSingleRelatedResource()
     {
-        $post = Post::factory()->create();
-        $author = $post->author;
+        $pullRequest = PullRequest::factory()->create();
+        $developer = $pullRequest->developer;
 
         Route::get('test-route', fn (Request $request) => (
-            PostResource::make(Post::with($request->query()['includes'])->first())
+            PullRequestResource::make(PullRequest::with($request->query()['includes'])->first())
         ));
-        $response = $this->getJson('test-route?includes=author');
+        $response = $this->getJson('test-route?includes=developer');
 
         $response->assertExactJson([
-            'data' => $this->createJsonResource($post, ['author' => $author]),
-            'included' => [$this->createJsonResource($author)],
+            'data' => $this->createJsonResource(
+                $pullRequest,
+                ['developer' => $developer],
+                links: ['view' => ['href' => $pullRequest->getShowUrl()]]
+            ),
+            'included' => [$this->createJsonResource($developer)],
         ]);
     }
 
     public function testRelatedResources()
     {
-        $post = Post::factory()
-            ->has(Comment::factory()->count(3))
+        $pullRequest = PullRequest::factory()
+            ->has(Review::factory()->count(3))
             ->create();
-        $comments = $post->comments;
+        $reviews = $pullRequest->reviews;
 
         Route::get('test-route', fn (Request $request) => (
-            PostResource::make(Post::with($request->query()['includes'])->first())
+            PullRequestResource::make(PullRequest::with($request->query()['includes'])->first())
         ));
-        $response = $this->getJson('test-route?includes=comments');
+        $response = $this->getJson('test-route?includes=reviews');
 
         $response->assertExactJson([
-            'data' => $this->createJsonResource($post, ['comments' => $comments]),
-            'included' => $this->createJsonResource($comments),
+            'data' => $this->createJsonResource(
+                $pullRequest,
+                ['reviews' => $reviews],
+                links: ['view' => ['href' => $pullRequest->getShowUrl()]]
+            ),
+            'included' => $this->createJsonResource($reviews),
         ]);
     }
 
     public function testDuplicatedRelatedResources()
     {
-        $post = Post::factory()->create();
-        $author = $post->author;
+        $pullRequest = PullRequest::factory()->create();
+        $developer = $pullRequest->developer;
 
-        $comment = Comment::factory([
-            'account_id' => $author->id,
-            'post_id' => $post->id,
-        ])->create();
+        $review = Review::factory()
+            ->for($pullRequest)
+            ->for($developer, 'reviewer')
+            ->create();
 
         Route::get('test-route', fn (Request $request) => (
-            PostResource::make(Post::with(explode(',', $request->query()['includes']))->first())
+            PullRequestResource::make(PullRequest::with(explode(',', $request->query()['includes']))->first())
         ));
-        $response = $this->getJson('test-route?includes=author,comments,comments.commenter');
+        $response = $this->getJson('test-route?includes=developer,reviews,reviews.reviewer');
 
         $response->assertExactJson([
-            'data' => $this->createJsonResource($post, ['author' => $author, 'comments' => [$comment]]),
+            'data' => $this->createJsonResource(
+                $pullRequest,
+                ['developer' => $developer, 'reviews' => [$review]],
+                links: ['view' => ['href' => $pullRequest->getShowUrl()]]
+            ),
             'included' => [
-                $this->createJsonResource($author),
-                $this->createJsonResource($comment, ['commenter' => $author]),
+                $this->createJsonResource($developer),
+                $this->createJsonResource($review, ['reviewer' => $developer]),
             ],
         ]);
     }
 
     public function testDeepRelatedResource()
     {
-        $account = Account::factory()->create();
+        $developer = Developer::factory()->create();
 
-        $post = Post::factory([
-            'author_id' => $account->id,
-        ])
-            ->has(Comment::factory()->has(Account::factory(), 'commenter'), 'comments')
-            ->has(Comment::factory()->for($account, 'commenter'), 'comments')
+        $pullRequest = PullRequest::factory()
+            ->for($developer)
+            ->has(Review::factory()->has(Developer::factory(), 'reviewer'), 'reviews')
+            ->has(Review::factory()->for($developer, 'reviewer'), 'reviews')
             ->create();
-        $author = $post->author;
-        $comments = $post->comments;
-        $commenter = $comments->first()->commenter;
-        $authorAsCommenter = $comments[1]->commenter;
+        $prDeveloper = $pullRequest->developer;
+        $reviews = $pullRequest->reviews;
+        $reviewer = $reviews->first()->reviewer;
+        $authorAsReviewer = $reviews[1]->reviewer;
 
         Route::get('test-route', fn (Request $request) => (
-            AccountResource::make([Account::with(explode(',', $request->query()['includes']))->first(), 3])
+            DeveloperResource::make([Developer::with(explode(',', $request->query()['includes']))->first(), 3])
         ));
-        $response = $this->getJson('test-route?includes=posts,posts.author,posts.comments,posts.comments.commenter');
+        $response = $this->getJson('test-route?includes=pullRequests,pullRequests.developer,pullRequests.reviews,pullRequests.reviews.reviewer');
 
         $response->assertExactJson([
-            'data' => $this->createJsonResource($author, ['posts' => [$post]]),
+            'data' => $this->createJsonResource($prDeveloper, ['pull_requests' => [$pullRequest]]),
             'included' => [
-                $this->createJsonResource($post, ['author' => $author, 'comments' => $comments]),
-                $this->createJsonResource($author),
-                $this->createJsonResource($comments[0], ['commenter' => $commenter]),
-                $this->createJsonResource($comments[1], ['commenter' => $authorAsCommenter]),
-                $this->createJsonResource($commenter),
+                $this->createJsonResource(
+                    $pullRequest,
+                    ['developer' => $prDeveloper, 'reviews' => $reviews],
+                    links: ['view' => ['href' => $pullRequest->getShowUrl()]]
+                ),
+                $this->createJsonResource($prDeveloper),
+                $this->createJsonResource($reviews[0], ['reviewer' => $reviewer]),
+                $this->createJsonResource($reviews[1], ['reviewer' => $authorAsReviewer]),
+                $this->createJsonResource($reviewer),
             ],
         ]);
     }
 
     public function testTooDeepRelatedResource()
     {
-        $account = Account::factory()->create();
+        $developer = Developer::factory()->create();
 
-        $post = Post::factory([
-            'author_id' => $account->id,
-        ])
-            ->has(Comment::factory()->has(Account::factory(), 'commenter'), 'comments')
-            ->has(Comment::factory()->for($account, 'commenter'), 'comments')
+        $pullRequest = PullRequest::factory()
+            ->for($developer)
+            ->has(Review::factory()->has(Developer::factory(), 'reviewer'), 'reviews')
+            ->has(Review::factory()->for($developer, 'reviewer'), 'reviews')
             ->create();
-        $postAuthor = $post->author;
-        $comments = $post->comments;
-        $commentAuthor = $comments->first()->commenter;
+        $prDeveloper = $pullRequest->developer;
+        $reviews = $pullRequest->reviews;
+        $reviewer = $reviews->first()->reviewer;
 
         Route::get('test-route', fn (Request $request) => (
-            AccountResource::make([Account::with(explode(',', $request->query()['includes']))->first(), 2])
+            DeveloperResource::make([Developer::with(explode(',', $request->query()['includes']))->first(), 2])
         ));
-        $response = $this->getJson('test-route?includes=posts,posts.author,posts.comments,posts.comments.commenter');
-
+        $response = $this->getJson('test-route?includes=pullRequests,pullRequests.developer,pullRequests.reviews,pullRequests.reviews.reviewer');
         $response->assertExactJson([
-            'data' => $this->createJsonResource($postAuthor, ['posts' => [$post]]),
+            'data' => $this->createJsonResource($prDeveloper, ['pull_requests' => [$pullRequest]]),
             'included' => [
-                $this->createJsonResource($post, ['author' => $postAuthor, 'comments' => $comments]),
-                $this->createJsonResource($postAuthor),
-                $this->createJsonResource($comments[0]),
-                $this->createJsonResource($comments[1]),
+                $this->createJsonResource(
+                    $pullRequest,
+                    ['developer' => $prDeveloper, 'reviews' => $reviews],
+                    links: ['view' => ['href' => $pullRequest->getShowUrl()]]
+                ),
+                $this->createJsonResource($prDeveloper),
+                $this->createJsonResource($reviews[0]),
+                $this->createJsonResource($reviews[1]),
             ],
         ]);
-        $response->assertJsonMissing(['id' => $commentAuthor->identifier]);
-    }
-
-    public function testResourceWithMetaData()
-    {
-        $account = Account::factory()
-            ->has(Post::factory()->count(10))
-            ->create();
-        Route::get('test-route', fn () => (
-            AccountResource::make(Account::with('posts')->first())
-        ));
-        $response = $this->getJson('test-route');
-
-        $response->assertExactJson([
-            'data' => $this->createJsonResource(
-                modelOrCollection: $account,
-                relationships: ['posts' => $account->posts],
-                meta: ['experienced_author' => true]
-            ),
-            'included' => $this->createJsonResource($account->posts),
-        ]);
-    }
-
-    public function testResourceWithLinkData()
-    {
-
-        $link = 'https://some-link-to-blog.com';
-        $post = Post::factory([
-            'url' => $link,
-        ])->create();
-
-        Route::get('test-route', fn () => (
-            PostResource::make(Post::first())
-        ));
-        $response = $this->getJson('test-route');
-
-        $response->assertExactJson([
-            'data' => $this->createJsonResource($post, links: ['view' => ['href' => $link]]),
-        ]);
-    }
-
-    public function testResourceSparseFieldset()
-    {
-        $post = Post::factory()->create();
-
-        Route::get('test-route', fn () => (
-            PostResource::make(Post::first())
-        ));
-        $response = $this->getJson('test-route?fields[posts]=title');
-
-        $response->assertExactJson([
-            'data' => $this->createJsonResource($post, onlyAttributes: ['title']),
-        ]);
-        $response->assertJsonMissing(['content' => $post->content]);
-    }
-
-    public function testResourceIncludedSparseFieldset()
-    {
-        $account = Account::factory(['email' => 'bloke@example.org'])->create();
-
-        $post = Post::factory()
-            ->for($account, 'author')
-            ->create();
-
-        $author = $post->author;
-
-        Route::get('test-route', fn (Request $request) => (
-            PostResource::make(Post::with($request->query()['includes'])->first())
-        ));
-        $response = $this->getJson('test-route?includes=author&fields[posts]=title&fields[accounts]=email');
-
-        $response->assertExactJson([
-            'data' => $this->createJsonResource($post, ['author' => $author], onlyAttributes: ['title']),
-            'included' => [
-                $this->createJsonResource($author, onlyAttributes: ['email']),
-            ],
-        ]);
+        $response->assertJsonMissing(['id' => $reviewer->identifier]);
     }
 
     public function testResourceDoubleLoadedDoesNotOverwriteButMerge()
     {
-        $posterAccount = Account::factory()->create(['email' => 'markie@example.org']);
-        $commenterAccount = Account::factory()->create(['email' => 'commenter@example.org']);
-        $post = Post::factory()
-            ->for($posterAccount, 'author')
+        $prDeveloper = Developer::factory()->create();
+        $reviewer = Developer::factory()->create();
+        $pullRequest = PullRequest::factory()
+            ->for($prDeveloper)
             ->create();
 
-        $comment = Comment::factory()->create([
-            'post_id' => $post,
-            'content' => 'This is the test comment.',
-            'account_id' => $commenterAccount,
-        ]);
+        $review = Review::factory()
+            ->for($pullRequest)
+            ->for($reviewer, 'reviewer')
+            ->create();
 
         Route::get('test-route', fn (Request $request) => (
-            PostResource::make([Post::with(explode(',', $request->query()['includes']))->first(), 3])
+            PullRequestResource::make([PullRequest::with(explode(',', $request->query()['includes']))->first(), 3])
         ));
 
-        $response = $this->getJson('test-route?includes=comments.commenter.comments');
+        $response = $this->getJson('test-route?includes=reviews.reviewer.reviews');
 
         $response->assertStatus(200);
         $response->assertExactJson([
-            'data' => $this->createJsonResource($post, ['comments' => [$comment]]),
+            'data' => $this->createJsonResource(
+                $pullRequest,
+                ['reviews' => [$review]],
+                links: ['view' => ['href' => $pullRequest->getShowUrl()]]
+            ),
             'included' => [
-                $this->createJsonResource($comment, ['commenter' => $commenterAccount]),
-                $this->createJsonResource($commenterAccount, ['comments' => [$comment]]),
+                $this->createJsonResource($review, ['reviewer' => $reviewer]),
+                $this->createJsonResource($reviewer, ['reviews' => [$review]]),
             ],
         ]);
     }
 
     public function testAddMetadataShowsInRepsonse()
     {
-        $author = Account::factory()->create();
-        $posts = Post::factory(10)->for($author, 'author')->create();
+        $developer = Developer::factory()
+            ->has(PullRequest::factory(10))
+            ->create();
 
         Route::get('test-route', fn (Request $request) => (
-            AccountResource::make([Account::with(explode(',', $request->query()['includes']))->first(), 2])
+            DeveloperResource::make([Developer::with(explode(',', $request->query()['includes']))->first(), 2])
                 ->addMeta(['added_metadata' => true])
         ));
 
-        $response = $this->getJson('test-route?includes=posts');
+        $response = $this->getJson('test-route?includes=pullRequests');
 
         $response->assertOk();
         $response->assertJsonFragment(['added_metadata' => true]);
 
         // The one below comes from the register function (if more than 10 posts)
-        $response->assertJsonFragment(['experienced_author' => true]);
+        $response->assertJsonFragment(['experienced_developer' => true]);
     }
 
     public function testAddMetadataMultipleTimesShowsAll()
     {
-        Account::factory()->create();
+        Developer::factory()->create();
 
         Route::get('test-route', fn () => (
-            AccountResource::make([Account::first(), 2])
+            DeveloperResource::make([Developer::first(), 2])
                 ->addMeta(['added_metadata' => true])
                 ->addMeta(['extra_metadata' => true])
         ));
@@ -324,11 +248,12 @@ class JsonApiResourceTest extends TestCase
 
     public function testAddMetadataOverwritesExistingKeys()
     {
-        $author = Account::factory()->create();
-        Post::factory(10)->for($author, 'author')->create();
+        Developer::factory()
+            ->has(PullRequest::factory(10))
+            ->create();
 
         Route::get('test-route', fn () => (
-            AccountResource::make([Account::first(), 2])
+            DeveloperResource::make([Developer::first(), 2])
                 ->addMeta(['experienced_author' => false])
         ));
 
@@ -339,42 +264,49 @@ class JsonApiResourceTest extends TestCase
         $response->assertJsonMissing(['experienced_author' => true]);
     }
 
-    public function testFromMethodsCreation()
+    public function testResourceSparseFieldset()
     {
-        $account = Account::factory()->create();
-        $comment = Comment::factory()->for($account, 'commenter')->create();
+        $pullRequest = PullRequest::factory()->create();
+
+        Route::get('test-route', fn () => (
+            PullRequestResource::make(PullRequest::first())
+        ));
+        $response = $this->getJson('test-route?fields[pull_requests]=title');
+
+        $response->assertExactJson([
+            'data' => $this->createJsonResource(
+                $pullRequest,
+                onlyAttributes: ['title'],
+                links: ['view' => ['href' => $pullRequest->getShowUrl()]],
+            ),
+        ]);
+        $response->assertJsonMissing(['description' => $pullRequest->description]);
+    }
+
+    public function testResourceIncludedSparseFieldset()
+    {
+        $developer = Developer::factory(['email' => 'bloke@example.org'])->create();
+
+        $pullRequest = PullRequest::factory()
+            ->for($developer)
+            ->create();
+
+        $author = $pullRequest->developer;
 
         Route::get('test-route', fn (Request $request) => (
-            MethodBasedResource::make([
-                Comment::with($request->query()['includes'])->first(),
-                2,
-            ])->addMeta([
-                'key' => 'value',
-            ])
+            PullRequestResource::make(PullRequest::with($request->query()['includes'])->first())
         ));
+        $response = $this->getJson('test-route?includes=developer&fields[pull_requests]=title&fields[developers]=email');
 
-        $response = $this->getJson('test-route?includes=commenter');
-
-        $response->assertOk();
-        $response->assertJsonFragment([
-            'id' => $comment->identifier,
-            'type' => 'comments',
-            'content' => $comment->content,
-            'meta' => [
-                'key' => 'value',
+        $response->assertExactJson([
+            'data' => $this->createJsonResource(
+                $pullRequest,
+                ['developer' => $developer], onlyAttributes: ['title'],
+                links: ['view' => ['href' => $pullRequest->getShowUrl()]],
+            ),
+            'included' => [
+                $this->createJsonResource($developer, onlyAttributes: ['email']),
             ],
-            'links' => [
-                'show' => $comment->getShowUrl(),
-            ],
-            'relationships' => [
-                'commenter' => [
-                    'data' => [
-                        'type' => 'accounts',
-                        'id' => $account->identifier,
-                    ],
-                ],
-            ],
-            'included' => [$this->createJsonResource($account)],
         ]);
     }
 }
