@@ -38,11 +38,6 @@ abstract class JsonApiResource extends JsonResource
     private int $maxResourceDepth;
 
     /**
-     * The way the resource is created. register|toArray.
-     */
-    private string $creationType;
-
-    /**
      * Construct with either a resource or an array with a resource and resource depth.
      */
     public function __construct($jsonApiResourceData)
@@ -59,7 +54,6 @@ abstract class JsonApiResource extends JsonResource
         $this->resourceDepth = $resourceDepth ?? 0;
         $this->registerData = $this->register();
         $this->resourceKey = "{$this->getType()}.{$this->getId()}";
-        $this->creationType = empty($this->registerData) ? 'toArray' : 'register';
 
         // We need to process the relationships on construct since we use the
         // constructor only in resolving (sub) includes. We do not call
@@ -192,13 +186,5 @@ abstract class JsonApiResource extends JsonResource
     protected function register(): array
     {
         return [];
-    }
-
-    /**
-     * Check if the resource is created via the `register()` method.
-     */
-    public function isRegistered(): bool
-    {
-        return $this->creationType === 'register';
     }
 }
