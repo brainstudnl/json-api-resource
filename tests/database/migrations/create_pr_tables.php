@@ -48,8 +48,8 @@ return new class extends Migration
 
     public function down()
     {
-        Schema::dropIfExists('accounts');
-        Schema::dropIfExists('posts');
-        Schema::dropIfExists('comments');
+        Schema::dropIfExists('developers');
+        Schema::dropIfExists('pull_requests');
+        Schema::dropIfExists('reviews');
     }
 };
