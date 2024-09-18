@@ -39,6 +39,23 @@ trait Attributes
             return $attributes;
         }
 
-        return array_filter($attributes, fn ($key) => in_array($key, $fields), ARRAY_FILTER_USE_KEY);
+        return $this->filterAttributes($attributes, $fields);
+    }
+
+    /**
+     * Filter the attributes to only include given fields.
+     *
+     * This method cleans the retrieved attributes by calling the `$this->filter()`
+     * method. This will flatten the `MergeValue` and `MissingValue` entries.
+     *
+     * @see JsonResource `->filter()`
+     */
+    private function filterAttributes(array $attributes, array $fields): array
+    {
+        return array_filter(
+            $this->filter($attributes),
+            fn ($key) => in_array($key, $fields),
+            ARRAY_FILTER_USE_KEY
+        );
     }
 }

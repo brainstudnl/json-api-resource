@@ -23,6 +23,16 @@ class JsonApiResourceTest extends TestCase
         $response->assertExactJson(['data' => $this->createJsonResource($developer)]);
     }
 
+    public function testBasicResourceWithOptionalField()
+    {
+        $developer = Developer::factory()->create(['email' => 'markie@brainstud.dev']);
+
+        Route::get('test-route', fn () => DeveloperResource::make($developer));
+        $response = $this->getJson('test-route');
+
+        $response->assertExactJson(['data' => $this->createJsonResource($developer)]);
+    }
+
     public function testResourceWithEmptyRelationLoaded()
     {
         $account = Developer::factory()

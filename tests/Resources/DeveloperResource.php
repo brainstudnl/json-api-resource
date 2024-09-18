@@ -11,15 +11,12 @@ class DeveloperResource extends JsonApiResource
 
     protected function toAttributes(Request $request): array
     {
-        $data = [
-            'name' => $this->resource->name,
+        return [
+            $this->merge(['name' => $this->resource->name]),
+            $this->mergeWhen(isset($this->resource->email), [
+                'email' => $this->resource->email,
+            ]),
         ];
-
-        if (isset($this->resource->email)) {
-            $data['email'] = $this->resource->email;
-        }
-
-        return $data;
     }
 
     protected function toRelationships(Request $request): array
