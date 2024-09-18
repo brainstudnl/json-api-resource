@@ -34,7 +34,7 @@ trait Relationships
      * This way, you can controll how 'deep' you want nesteds resources
      * to be included in the response.
      */
-    private function processRelationships(array $relationships): array
+    private function processRelationships(array $relationships): void
     {
         if ($this->resourceDepth < $this->maxResourceDepth) {
             $this->mapRelationships($relationships);
@@ -43,8 +43,6 @@ trait Relationships
         if ($this->resourceDepth < ($this->maxResourceDepth - 1)) {
             $this->addSubIncludes();
         }
-
-        return $this->relationshipReferences ?? [];
     }
 
     /**
