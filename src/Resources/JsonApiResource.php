@@ -5,7 +5,6 @@ namespace Brainstud\JsonApi\Resources;
 use Brainstud\JsonApi\Traits;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Arr;
 
 abstract class JsonApiResource extends JsonResource
 {
@@ -80,7 +79,7 @@ abstract class JsonApiResource extends JsonResource
             return [];
         }
 
-        $response = Arr::where([
+        $response = array_filter([
             'id' => $this->getId(),
             'type' => $this->getType(),
             'attributes' => $this->getAttributes($request),

@@ -4,7 +4,6 @@ namespace Brainstud\JsonApi\Tests\Resources;
 
 use Brainstud\JsonApi\Resources\JsonApiResource;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 
 class DeveloperResource extends JsonApiResource
 {
@@ -33,7 +32,7 @@ class DeveloperResource extends JsonApiResource
 
     public function toMeta(Request $request): array
     {
-        return Arr::whereNotNull([
+        return array_filter([
             'experienced_developer' => $this->when(
                 $this->resource->pullRequests()->count() >= 10,
                 true,
