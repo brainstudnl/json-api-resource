@@ -15,8 +15,10 @@ abstract class JsonApiResource extends JsonResource
 
     /**
      * The registered resource data.
+     *
+     * @deprecated
      */
-    private array $registrationData;
+    private array $registerData;
 
     /**
      * The unique key of this resource.
@@ -55,9 +57,9 @@ abstract class JsonApiResource extends JsonResource
 
         $this->maxResourceDepth = $maxResourceDepth ?? 2;
         $this->resourceDepth = $resourceDepth ?? 0;
-        $this->registrationData = $this->register();
+        $this->registerData = $this->register();
         $this->resourceKey = "{$this->getType()}.{$this->getId()}";
-        $this->creationType = empty($this->registrationData) ? 'toArray' : 'register';
+        $this->creationType = empty($this->registerData) ? 'toArray' : 'register';
 
         // We need to process the relationships on construct since we use the
         // constructor only in resolving (sub) includes. We do not call
@@ -119,67 +121,67 @@ abstract class JsonApiResource extends JsonResource
     /**
      * Get the id of the resource.
      *
-     * Default to either `registrationData['id']` or an
+     * Default to either `registerData['id']` or an
      * `identifier` field on the resource.
      */
     protected function getId(): string
     {
-        return $this->registrationData['id'] ?? $this->resource->identifier;
+        return $this->registerData['id'] ?? $this->resource->identifier;
     }
 
     /**
      * Get the type of the resource.
      *
-     * Default to either `registrationData['type']` or a
+     * Default to either `registerData['type']` or a
      * `type` field on the resource.
      */
     protected function getType(): string
     {
-        return $this->registrationData['type'] ?? $this->type;
+        return $this->registerData['type'] ?? $this->type;
     }
 
     /**
      * Define the attributes for the resource.
      *
-     * Default to either `registrationData['attributes']` or an empty array.
+     * Default to either `registerData['attributes']` or an empty array.
      * Should be overwritten to create custom attributes.
      */
     protected function toAttributes(Request $request): array
     {
-        return $this->registrationData['attributes'] ?? [];
+        return $this->registerData['attributes'] ?? [];
     }
 
     /**
      * Define the relationships for the resource.
      *
-     * Default to either `registrationData['relationships']` or an empty array.
+     * Default to either `registerData['relationships']` or an empty array.
      * Should be overwritten to create custom relationships.
      */
     protected function toRelationships(Request $request): array
     {
-        return $this->registrationData['relationships'] ?? [];
+        return $this->registerData['relationships'] ?? [];
     }
 
     /**
      * Define the metadata for the resource.
      *
-     * Default to either `registrationData['meta']` or an empty array.
+     * Default to either `registerData['meta']` or an empty array.
      * Should be overwritten to create custom metadata.
      */
     protected function toMeta(Request $request): array
     {
-        return $this->registrationData['meta'] ?? [];
+        return $this->registerData['meta'] ?? [];
     }
 
     /**
      * Define the links for the resource.
      *
-     * Default to either `registrationData['links']` or an empty array.
+     * Default to either `registerData['links']` or an empty array.
      * Should be overwritten to create custom links.
      */
     protected function toLinks(Request $request): array
     {
-        return $this->registrationData['links'] ?? [];
+        return $this->registerData['links'] ?? [];
     }
 
     /**
