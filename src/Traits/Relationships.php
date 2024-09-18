@@ -4,6 +4,7 @@ namespace Brainstud\JsonApi\Traits;
 
 use Brainstud\JsonApi\Resources\JsonApiResource;
 use Brainstud\JsonApi\Resources\JsonApiResourceCollection;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
 trait Relationships
@@ -18,24 +19,16 @@ trait Relationships
      */
     public array $included = [];
 
+    private Request $request;
+
     /**
      * Get the relationships for the resource.
      */
-    private function getRelationships($request): array
+    public function resolveRelationships($request): array
     {
-        return $this->relationshipReferences;
-    }
+        $this->request = $request;
+        $relationships = $this->toRelationships($request);
 
-    /**
-     * Process the relationships of the resource.
-     *
-     * This method adds the relationships and includes for a given resource.
-     * It also takes into account a resourceDepth and maxResourceDepth.
-     * This way, you can controll how 'deep' you want nesteds resources
-     * to be included in the response.
-     */
-    private function processRelationships(array $relationships): void
-    {
         if ($this->resourceDepth < $this->maxResourceDepth) {
             $this->mapRelationships($relationships);
         }
@@ -43,6 +36,8 @@ trait Relationships
         if ($this->resourceDepth < ($this->maxResourceDepth - 1)) {
             $this->addSubIncludes();
         }
+
+        return $this->relationshipReferences;
     }
 
     /**
@@ -101,6 +96,7 @@ trait Relationships
                 if (! $includedResource instanceof self) {
                     return $refs;
                 }
+                $includedResource->resolveRelationships($this->request);
                 $this->addInclude($includedResource);
 
                 return $refs->push($includedResource->toRelationshipReferenceArray());
@@ -120,6 +116,7 @@ trait Relationships
         if (! $includedResource instanceof self) {
             return;
         }
+        $includedResource->resolveRelationships($this->request);
 
         $this->addInclude($includedResource);
 
@@ -189,30 +186,7 @@ trait Relationships
     private function addInclude(JsonApiResource $includedResource): self
     {
         $existingIncludeResource = ($this->included[$includedResource->resourceKey]) ?? null;
-        $this->included[$includedResource->resourceKey] = $includedResource->combine($existingIncludeResource);
-
-        return $this;
-    }
-
-    /**
-     * combine.
-     *
-     * Merges two similar resources together.
-     */
-    private function combine(?JsonApiResource $second = null): JsonApiResource
-    {
-        if (! $second) {
-            return $this;
-        }
-        $this->registrationData = array_replace_recursive(
-            $this->registrationData,
-            $second->registrationData,
-        );
-
-        $this->relationshipReferences = array_replace_recursive(
-            $this->relationshipReferences,
-            $second->relationshipReferences,
-        );
+        $this->included[$includedResource->resourceKey] = $includedResource->mergeWith($existingIncludeResource);
 
         return $this;
     }

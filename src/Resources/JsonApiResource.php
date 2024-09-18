@@ -21,6 +21,11 @@ abstract class JsonApiResource extends JsonResource
     private array $registerData;
 
     /**
+     * The resource response data.
+     */
+    private array $data;
+
+    /**
      * The unique key of this resource.
      */
     public string $resourceKey;
@@ -54,13 +59,6 @@ abstract class JsonApiResource extends JsonResource
         $this->resourceDepth = $resourceDepth ?? 0;
         $this->registerData = $this->register();
         $this->resourceKey = "{$this->getType()}.{$this->getId()}";
-
-        // We need to process the relationships on construct since we use the
-        // constructor only in resolving (sub) includes. We do not call
-        // the `toArray` method until the very last moment. Might be
-        // an option to refactor this. But then the whole relationship
-        // resolving code has to be refactored. Keeping it like this for now.
-        $this->processRelationships($this->toRelationships(request()));
     }
 
     /**
@@ -71,20 +69,45 @@ abstract class JsonApiResource extends JsonResource
      */
     public function toArray($request): array
     {
-        if (is_null($this->resource)) {
-            return [];
+        return is_null($this->resource)
+            ? []
+            : $this->addToResponse($request, $this->getResourceData($request));
+    }
+
+    /**
+     * Returns the value of $this->data and sets it if it's empty.
+     */
+    public function getResourceData($request): array
+    {
+        if (empty($this->data)) {
+            $this->data = array_filter([
+                'id' => $this->getId(),
+                'type' => $this->getType(),
+                'attributes' => $this->getAttributes($request),
+                'relationships' => empty($this->relationshipReferences) ? $this->resolveRelationships($request) : $this->relationshipReferences,
+                'meta' => $this->getMeta($request),
+                'links' => $this->getLinks($request),
+            ], fn ($value) => ! empty($value));
         }
 
-        $response = array_filter([
-            'id' => $this->getId(),
-            'type' => $this->getType(),
-            'attributes' => $this->getAttributes($request),
-            'relationships' => $this->getRelationships($request),
-            'meta' => $this->getMeta($request),
-            'links' => $this->getLinks($request),
-        ], fn ($value) => ! empty($value));
+        return $this->data;
+    }
 
-        return $this->addToResponse($request, $response);
+    /**
+     * Merge with another resource.
+     */
+    private function mergeWith(?JsonApiResource $second = null): JsonApiResource
+    {
+        if (! $second) {
+            return $this;
+        }
+
+        $this->data = array_replace_recursive(
+            $this->filter($this->getResourceData($this->request)),
+            $this->filter($second->getResourceData($this->request)),
+        );
+
+        return $this;
     }
 
     /**
@@ -120,7 +143,7 @@ abstract class JsonApiResource extends JsonResource
      */
     protected function getId(): string
     {
-        return $this->registerData['id'] ?? $this->resource->identifier;
+        return $this->registerData['id'] ?? $this->resource->{$this->resource->getRouteKeyName()};
     }
 
     /**
