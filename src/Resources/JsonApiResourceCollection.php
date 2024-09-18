@@ -14,24 +14,6 @@ class JsonApiResourceCollection extends ResourceCollection
     public $collection;
 
     /**
-     * Build the response.
-     *
-     * @param  Request  $request
-     */
-    public function toArray($request): array
-    {
-        if ($this->collection->first()->isRegistered()) {
-            $response = [
-                'data' => $this->collection,
-            ];
-
-            return $this->addToResponse($request, $response);
-        }
-
-        return parent::toArray($request);
-    }
-
-    /**
      * Hook into the generated response and optionally manipulate it.
      *
      * @param  Request  $request
