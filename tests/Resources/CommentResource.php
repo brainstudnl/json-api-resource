@@ -20,6 +20,13 @@ class CommentResource extends JsonApiResource
             ],
         ];
 
+        if (request()->query('meta') === 'merge_data_test') {
+            $data['meta'] = [
+                $this->mergeWhen($this->resourceDepth === 1, ['firstResourceData' => true]),
+                $this->mergeWhen($this->resourceDepth === 3, ['secondResourceData' => true]),
+            ];
+        }
+
         return $data;
     }
 }

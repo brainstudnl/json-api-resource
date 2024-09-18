@@ -272,13 +272,13 @@ class JsonApiResourceRegisterTest extends TestCase
             PostResource::make([Post::with(explode(',', $request->query()['includes']))->first(), 3])
         ));
 
-        $response = $this->getJson('test-route?includes=comments.commenter.comments');
+        $response = $this->getJson('test-route?includes=comments.commenter.comments&meta=merge_data_test');
 
         $response->assertStatus(200);
         $response->assertExactJson([
             'data' => $this->createJsonResource($post, ['comments' => [$comment]]),
             'included' => [
-                $this->createJsonResource($comment, ['commenter' => $commenterAccount]),
+                $this->createJsonResource($comment, ['commenter' => $commenterAccount], ['firstResourceData' => true, 'secondResourceData' => true]),
                 $this->createJsonResource($commenterAccount, ['comments' => [$comment]]),
             ],
         ]);

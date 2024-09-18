@@ -203,7 +203,7 @@ class JsonApiResourceTest extends TestCase
             PullRequestResource::make([PullRequest::with(explode(',', $request->query()['includes']))->first(), 3])
         ));
 
-        $response = $this->getJson('test-route?includes=reviews.reviewer.reviews');
+        $response = $this->getJson('test-route?includes=reviews.reviewer.reviews&meta=merge_data_test');
 
         $response->assertStatus(200);
         $response->assertExactJson([
@@ -213,7 +213,7 @@ class JsonApiResourceTest extends TestCase
                 links: ['view' => ['href' => $pullRequest->getShowUrl()]]
             ),
             'included' => [
-                $this->createJsonResource($review, ['reviewer' => $reviewer]),
+                $this->createJsonResource($review, ['reviewer' => $reviewer], ['firstResourceData' => true, 'secondResourceData' => true]),
                 $this->createJsonResource($reviewer, ['reviews' => [$review]]),
             ],
         ]);

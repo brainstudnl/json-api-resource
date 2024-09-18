@@ -23,4 +23,14 @@ class ReviewResource extends JsonApiResource
             'pull_request' => ['pullRequest', PullRequestResource::class],
         ];
     }
+
+    protected function toMeta(Request $request): array
+    {
+        return [
+            $this->mergeWhen($request->query('meta') === 'merge_data_test', fn () => [
+                $this->mergeWhen($this->resourceDepth === 1, ['firstResourceData' => true]),
+                $this->mergeWhen($this->resourceDepth === 3, ['secondResourceData' => true]),
+            ]),
+        ];
+    }
 }
