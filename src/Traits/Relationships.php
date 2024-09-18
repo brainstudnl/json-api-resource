@@ -90,23 +90,24 @@ trait Relationships
      */
     private function addResourceCollectionRelation(
         $relationKey,
-        $resourceDataCollection,
-        $resourceCollectionClass
+        Collection $resourceCollection,
+        $collectionClass
     ): void {
-        $resourceClass = (new $resourceCollectionClass([]))->collects;
-        $relationshipReferences = [];
+        $resourceClass = (new $collectionClass([]))->collects;
 
-        foreach ($resourceDataCollection as $resourceData) {
-            $includedResource = new $resourceClass([$resourceData, $this->maxResourceDepth, $this->resourceDepth + 1]);
-            if (! $includedResource instanceof self) {
-                continue;
-            }
-            $this->addInclude($includedResource);
-            $relationshipReferences[] = $includedResource->toRelationshipReferenceArray();
-        }
+        $references = $resourceCollection->reduce(
+            function (Collection $refs, $resourceData) use ($resourceClass) {
+                $includedResource = new $resourceClass([$resourceData, $this->maxResourceDepth, $this->resourceDepth + 1]);
+                if (! $includedResource instanceof self) {
+                    return $refs;
+                }
+                $this->addInclude($includedResource);
+
+                return $refs->push($includedResource->toRelationshipReferenceArray());
+            }, collect());
 
         $this->relationshipReferences[$relationKey] = [
-            'data' => $relationshipReferences,
+            'data' => $references,
         ];
     }
 
