@@ -9,6 +9,6 @@ trait Links
      */
     private function getLinks($request): array
     {
-        return $this->toLinks($request);
+        return $this->filter($this->toLinks($request));
     }
 }

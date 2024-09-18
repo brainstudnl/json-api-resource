@@ -16,7 +16,7 @@ trait Meta
      */
     private function getMeta($request): array
     {
-        return array_merge($this->toMeta($request), $this->meta);
+        return $this->filter(array_merge($this->toMeta($request), $this->meta));
     }
 
     /**
