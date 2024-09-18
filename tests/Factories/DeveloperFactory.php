@@ -2,16 +2,16 @@
 
 namespace Brainstud\JsonApi\Tests\Factories;
 
-use Brainstud\JsonApi\Tests\Models\Account;
+use Brainstud\JsonApi\Tests\Models\Developer;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @method Collection<int, Account>|Account create($attributes = [], ?Model $parent = null)
+ * @method Collection<int, Developer>|Developer create($attributes = [], ?Model $parent = null)
  */
-class AccountFactory extends Factory
+class DeveloperFactory extends Factory
 {
-    protected $model = Account::class;
+    protected $model = Developer::class;
 
     public function definition(): array
     {

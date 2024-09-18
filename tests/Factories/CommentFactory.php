@@ -8,6 +8,9 @@ use Brainstud\JsonApi\Tests\Models\Post;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
+/**
+ * @method Collection<int, Comment>|Comment create($attributes = [], ?Model $parent = null)
+ */
 class CommentFactory extends Factory
 {
     protected $model = Comment::class;

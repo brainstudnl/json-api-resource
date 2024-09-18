@@ -9,7 +9,7 @@ use Brainstud\JsonApi\Tests\Resources\AccountResourceCollection;
 use Brainstud\JsonApi\Tests\TestCase;
 use Illuminate\Support\Facades\Route;
 
-class JsonApiCollectionResourceTest extends TestCase
+class JsonApiResourceCollectionRegisterTest extends TestCase
 {
     public function testBasicResourceCollectionResource()
     {
@@ -34,7 +34,7 @@ class JsonApiCollectionResourceTest extends TestCase
         $author = Account::factory()->has(Post::factory())->create();
 
         Route::get('test-route', fn () => AccountResourceCollection::make(Account::with('posts')->get()));
-        $response = $this->getJson('test-route?include=posts');
+        $response = $this->getJson('test-route');
 
         $response->assertExactJson([
             'data' => [

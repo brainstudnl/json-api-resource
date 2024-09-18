@@ -7,6 +7,9 @@ use Brainstud\JsonApi\Tests\Models\Post;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
+/**
+ * @method Collection<int, Post>|Post create($attributes = [], ?Model $parent = null)
+ */
 class PostFactory extends Factory
 {
     protected $model = Post::class;

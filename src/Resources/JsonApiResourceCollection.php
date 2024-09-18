@@ -9,18 +9,9 @@ use Illuminate\Support\Collection;
 class JsonApiResourceCollection extends ResourceCollection
 {
     /**
-     * Build the response
-     *
-     * @param  Request  $request
+     * @var Collection<int, JsonApiResource>
      */
-    public function toArray($request): array
-    {
-        $response = [
-            'data' => $this->collection,
-        ];
-
-        return $this->addToResponse($request, $response);
-    }
+    public $collection;
 
     /**
      * Hook into the generated response and optionally manipulate it.
@@ -33,7 +24,7 @@ class JsonApiResourceCollection extends ResourceCollection
     }
 
     /**
-     * Include the loaded relations
+     * Include the loaded relations.
      *
      * @param  Request  $request
      */
@@ -65,7 +56,7 @@ class JsonApiResourceCollection extends ResourceCollection
     }
 
     /**
-     * Compose a unique collection of loaded relations
+     * Compose a unique collection of loaded relations.
      */
     private function composeIncludesForCollection(): Collection
     {
