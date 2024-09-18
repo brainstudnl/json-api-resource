@@ -7,9 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Arr;
 
-/**
- * @mixin Attributes
- */
 abstract class JsonApiResource extends JsonResource
 {
     use Traits\Attributes;
@@ -132,7 +129,7 @@ abstract class JsonApiResource extends JsonResource
     }
 
     /**
-     * Get the id of the resource.
+     * Get the type of the resource.
      *
      * Default to either `registrationData['type']` or a
      * `type` field on the resource.

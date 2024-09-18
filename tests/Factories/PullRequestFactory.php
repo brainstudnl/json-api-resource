@@ -7,6 +7,9 @@ use Brainstud\JsonApi\Tests\Models\PullRequest;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
+/**
+ * @method Collection<int, PullRequest>|PullRequest create($attributes = [], ?Model $parent = null)
+ */
 class PullRequestFactory extends Factory
 {
     protected $model = PullRequest::class;

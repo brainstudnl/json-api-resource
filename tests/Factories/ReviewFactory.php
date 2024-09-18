@@ -8,6 +8,9 @@ use Brainstud\JsonApi\Tests\Models\Review;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
+/**
+ * @method Collection<int, Review>|Review create($attributes = [], ?Model $parent = null)
+ */
 class ReviewFactory extends Factory
 {
     protected $model = Review::class;

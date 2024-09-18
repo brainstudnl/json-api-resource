@@ -9,12 +9,12 @@ use Illuminate\Support\Collection;
 trait Relationships
 {
     /**
-     * The relation references of this resource
+     * The relation references of this resource.
      */
     private array $relationshipReferences = [];
 
     /**
-     * The included resources that the relation references are referencing
+     * The included resources that the relation references are referencing.
      */
     public array $included = [];
 
@@ -48,7 +48,7 @@ trait Relationships
     }
 
     /**
-     * Map all registered relationships to a resource
+     * Map all registered relationships to a resource.
      */
     private function mapRelationships(array $relationships): void
     {
@@ -62,7 +62,7 @@ trait Relationships
     }
 
     /**
-     * Map a single relationship into an included resource
+     * Map a single relationship into an included resource.
      */
     private function mapSingleRelationship($relationKey, $relationData): void
     {
@@ -88,7 +88,7 @@ trait Relationships
     }
 
     /**
-     * Add a collection relationship to the resource relationships and included data
+     * Add a collection relationship to the resource relationships and included data.
      */
     private function addResourceCollectionRelation(
         $relationKey,
@@ -113,7 +113,7 @@ trait Relationships
     }
 
     /**
-     * Add a relation to the resource
+     * Add a relation to the resource.
      */
     private function addResourceRelation($relationKey, $resourceData, $resourceClass): void
     {
@@ -130,7 +130,7 @@ trait Relationships
     }
 
     /**
-     * Check if the resource object has data
+     * Check if the resource object has data.
      */
     private function resourceHasData($resourceData, $resourceClass): bool
     {
@@ -148,7 +148,7 @@ trait Relationships
     }
 
     /**
-     * Return the relation if it's loaded on the model
+     * Return the relation if it's loaded on the model.
      *
      * @param  string  $dataPath  The method name of the relation
      * @return mixed The loaded relationship
@@ -168,7 +168,7 @@ trait Relationships
     }
 
     /**
-     * Flatten the includes of includes
+     * Flatten the includes of includes.
      */
     private function addSubIncludes(): void
     {
@@ -229,7 +229,7 @@ trait Relationships
     }
 
     /**
-     * Create a relationship reference
+     * Create a relationship reference.
      */
     public function toRelationshipReferenceArray(): array
     {

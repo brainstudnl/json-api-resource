@@ -14,7 +14,7 @@ class JsonApiResourceCollection extends ResourceCollection
     public $collection;
 
     /**
-     * Build the response
+     * Build the response.
      *
      * @param  Request  $request
      */
@@ -42,7 +42,7 @@ class JsonApiResourceCollection extends ResourceCollection
     }
 
     /**
-     * Include the loaded relations
+     * Include the loaded relations.
      *
      * @param  Request  $request
      */
@@ -74,7 +74,7 @@ class JsonApiResourceCollection extends ResourceCollection
     }
 
     /**
-     * Compose a unique collection of loaded relations
+     * Compose a unique collection of loaded relations.
      */
     private function composeIncludesForCollection(): Collection
     {

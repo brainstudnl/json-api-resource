@@ -5,7 +5,7 @@ namespace Brainstud\JsonApi\Traits;
 trait Meta
 {
     /**
-     * Metadata for the resource
+     * Metadata for the resource.
      *
      * NOTE: this differs from `additional` on JsonResource which adds to the response.
      */
@@ -25,9 +25,9 @@ trait Meta
      * Saves the given data to the `$meta` property.
      * Please note that this metadata overwrites any added metadata from the `register()` function.
      *
-     * @param  array  $data  An associative array to add to the metadata
+     * @param  array  $data  An associative array to add to the metadata.
      *
-     * @throws \InvalidArgumentException if a non-associative array is given to the function
+     * @throws \InvalidArgumentException if a non-associative array is given to the function.
      */
     public function addMeta(array $data): self
     {

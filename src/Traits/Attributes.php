@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 trait Attributes
 {
     /**
-     * Get the attributes for the resource
+     * Get the attributes for the resource.
      *
      * If the resource is defined via a `register` method, this wile use
      * registration data. Else return the value of `toAttributes`.
