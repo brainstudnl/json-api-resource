@@ -80,14 +80,18 @@ abstract class JsonApiResource extends JsonResource
     public function getResourceData($request): array
     {
         if (empty($this->data)) {
-            $this->data = array_filter([
-                'id' => $this->getId(),
-                'type' => $this->getType(),
-                'attributes' => $this->getAttributes($request),
-                'relationships' => empty($this->relationshipReferences) ? $this->resolveRelationships($request) : $this->relationshipReferences,
-                'meta' => $this->getMeta($request),
-                'links' => $this->getLinks($request),
-            ], fn ($value) => ! empty($value));
+            $this->data = array_filter(
+                [
+                    'id' => $this->getId(),
+                    'type' => $this->getType(),
+                    'attributes' => $this->getAttributes($request),
+                    'relationships' => empty($this->relationshipReferences) ? $this->resolveRelationships($request) : $this->relationshipReferences,
+                    'meta' => $this->getMeta($request),
+                    'links' => $this->getLinks($request),
+                ],
+                fn ($value, $key) => $key === 'attributes' || ! empty($value),
+                ARRAY_FILTER_USE_BOTH
+            );
         }
 
         return $this->data;
