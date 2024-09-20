@@ -141,7 +141,7 @@ abstract class JsonApiResource extends JsonResource
      * Default to either `registerData['id']` or an
      * `identifier` field on the resource.
      */
-    protected function getId(): string
+    protected function getId(): string|int
     {
         return $this->registerData['id'] ?? $this->resource->{$this->resource->getRouteKeyName()};
     }
