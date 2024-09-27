@@ -27,7 +27,7 @@ trait Relationships
     public function resolveRelationships($request): array
     {
         $this->request = $request;
-        $relationships = $this->toRelationships($request);
+        $relationships = $this->filter($this->toRelationships($request));
 
         if ($this->resourceDepth < $this->maxResourceDepth) {
             $this->mapRelationships($relationships);
