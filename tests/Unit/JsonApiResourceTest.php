@@ -6,6 +6,7 @@ use Brainstud\JsonApi\Tests\Models\Developer;
 use Brainstud\JsonApi\Tests\Models\PullRequest;
 use Brainstud\JsonApi\Tests\Models\Review;
 use Brainstud\JsonApi\Tests\Resources\DeveloperResource;
+use Brainstud\JsonApi\Tests\Resources\DeveloperToIdResource;
 use Brainstud\JsonApi\Tests\Resources\PullRequestResource;
 use Brainstud\JsonApi\Tests\TestCase;
 use Illuminate\Http\Request;
@@ -21,6 +22,16 @@ class JsonApiResourceTest extends TestCase
         $response = $this->getJson('test-route');
 
         $response->assertExactJson(['data' => $this->createJsonResource($developer)]);
+    }
+
+    public function testWithCustomToIdMethod()
+    {
+        $developer = Developer::factory()->create();
+
+        Route::get('test-route', fn () => DeveloperToIdResource::make($developer));
+        $response = $this->getJson('test-route');
+
+        $response->assertJsonFragment(['id' => $developer->name]);
     }
 
     public function testBasicResourceCollection()
