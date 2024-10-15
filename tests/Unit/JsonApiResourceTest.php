@@ -3,10 +3,11 @@
 namespace Brainstud\JsonApi\Tests\Unit;
 
 use Brainstud\JsonApi\Tests\Models\Developer;
+use Brainstud\JsonApi\Tests\Models\Intern;
 use Brainstud\JsonApi\Tests\Models\PullRequest;
 use Brainstud\JsonApi\Tests\Models\Review;
 use Brainstud\JsonApi\Tests\Resources\DeveloperResource;
-use Brainstud\JsonApi\Tests\Resources\DeveloperToIdResource;
+use Brainstud\JsonApi\Tests\Resources\InternResource;
 use Brainstud\JsonApi\Tests\Resources\PullRequestResource;
 use Brainstud\JsonApi\Tests\TestCase;
 use Illuminate\Http\Request;
@@ -24,14 +25,14 @@ class JsonApiResourceTest extends TestCase
         $response->assertExactJson(['data' => $this->createJsonResource($developer)]);
     }
 
-    public function testWithCustomToIdMethod()
+    public function testNonEloquentResource()
     {
-        $developer = Developer::factory()->create();
+        $intern = new Intern('Markie Mark', 'Development');
 
-        Route::get('test-route', fn () => DeveloperToIdResource::make($developer));
+        Route::get('test-route', fn () => InternResource::make($intern));
         $response = $this->getJson('test-route');
 
-        $response->assertJsonFragment(['id' => $developer->name]);
+        $response->assertJsonFragment(['id' => $intern->id]);
     }
 
     public function testBasicResourceCollection()
