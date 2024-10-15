@@ -21,13 +21,13 @@ trait Id
      */
     private function guessId(): int|string|null
     {
-        return $this->fromRegisterData()
+        return $this->idFromRegisterData()
             ?? $this->fromRouteKey()
             ?? $this->fromIdAttribute()
             ?? null;
     }
 
-    private function fromRegisterData(): int|string|null
+    private function idFromRegisterData(): int|string|null
     {
         return $this->registerData['id'] ?? null;
     }
