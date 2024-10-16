@@ -9,6 +9,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 abstract class JsonApiResource extends JsonResource
 {
     use Traits\Attributes;
+    use Traits\Id;
     use Traits\Links;
     use Traits\Meta;
     use Traits\Relationships;
@@ -140,14 +141,15 @@ abstract class JsonApiResource extends JsonResource
     }
 
     /**
-     * Get the id of the resource.
+     * Define the `id` for the resource.
      *
-     * Default to either `registerData['id']` or an
-     * `identifier` field on the resource.
+     * If this method is not overwritten, the package will try to guess the
+     * `id` by (in order) the `id` in `registerData`, calling the Eloquent
+     * method `getRouteKeyName`, an `id` property or return `null`.
      */
-    protected function getId(): string|int
+    protected function toId(): string|int|null
     {
-        return $this->registerData['id'] ?? $this->resource->{$this->resource->getRouteKeyName()};
+        return null;
     }
 
     /**
