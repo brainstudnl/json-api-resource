@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 
 class JsonApiResourceCollectionTest extends TestCase
 {
-    public function testBasicResourceCollectionResource()
+    public function test_basic_resource_collection_resource()
     {
         $developers = Developer::factory()->count(3)->create();
 
@@ -25,7 +25,7 @@ class JsonApiResourceCollectionTest extends TestCase
         ]);
     }
 
-    public function testCollectionResourceWithRelations()
+    public function test_collection_resource_with_relations()
     {
         $others = Developer::factory(3)->create();
         $developer = Developer::factory()
@@ -49,7 +49,7 @@ class JsonApiResourceCollectionTest extends TestCase
         ]);
     }
 
-    public function testCollectionResourceEnlargeResourceDepth1()
+    public function test_collection_resource_enlarge_resource_depth1()
     {
         $someBloke = Developer::factory()->create();
 
@@ -111,7 +111,7 @@ class JsonApiResourceCollectionTest extends TestCase
         ]);
     }
 
-    public function testAddMetaToResources(): void
+    public function test_add_meta_to_resources(): void
     {
         $developers = Developer::factory(3)->create();
 

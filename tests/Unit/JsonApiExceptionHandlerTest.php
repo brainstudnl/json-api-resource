@@ -23,7 +23,7 @@ class JsonApiExceptionHandlerTest extends TestCase
 
     private JsonApiExceptionHandler $handler;
 
-    public function setup(): void
+    protected function setup(): void
     {
         parent::setUp();
         $this->container = Container::getInstance();
@@ -35,7 +35,7 @@ class JsonApiExceptionHandlerTest extends TestCase
         return Request::create('/', server: ['HTTP_ACCEPT' => 'application/json']);
     }
 
-    public function testJsonApiHttpException()
+    public function test_json_api_http_exception()
     {
         $request = $this->makeJsonRequest();
         $exception = new JsonApiHttpException(
@@ -53,7 +53,7 @@ class JsonApiExceptionHandlerTest extends TestCase
         $this->assertEquals('message', $errorContent->detail);
     }
 
-    public function testJsonApiHttpExceptionImplementationWithDefaults()
+    public function test_json_api_http_exception_implementation_with_defaults()
     {
         $request = $this->makeJsonRequest();
         $exception = new PaymentRequiredJsonApiException;
@@ -67,7 +67,7 @@ class JsonApiExceptionHandlerTest extends TestCase
         $this->assertEquals('Payment required', $errorContent->title);
     }
 
-    public function testJsonApiHttpExceptionImplementationWithTranslations()
+    public function test_json_api_http_exception_implementation_with_translations()
     {
         App::setLocale('nl');
         $request = $this->makeJsonRequest();
@@ -85,7 +85,7 @@ class JsonApiExceptionHandlerTest extends TestCase
         );
     }
 
-    public function testModelNotFoundException()
+    public function test_model_not_found_exception()
     {
         $request = $this->makeJsonRequest();
         $exception = (new ModelNotFoundException)->setModel('TestModel');
@@ -99,7 +99,7 @@ class JsonApiExceptionHandlerTest extends TestCase
         $this->assertEquals('TestModel not found', $errorContent->title);
     }
 
-    public function testGenericExceptionResultsInInternalServerError()
+    public function test_generic_exception_results_in_internal_server_error()
     {
         $request = $this->makeJsonRequest();
         $exception = new \Exception('An error message');
@@ -113,7 +113,7 @@ class JsonApiExceptionHandlerTest extends TestCase
         $this->assertEquals('An error message', $errorContent->detail);
     }
 
-    public function testValidationException()
+    public function test_validation_exception()
     {
         $request = $this->makeJsonRequest();
         $fac = $this->container->make(Factory::class);
@@ -131,7 +131,7 @@ class JsonApiExceptionHandlerTest extends TestCase
         $this->assertEquals($errorContent[0]->detail, 'isInvalidMessage');
     }
 
-    public function testErrorResponseHasMetaFilledWithDebugTrue()
+    public function test_error_response_has_meta_filled_with_debug_true()
     {
         Config::set('app.debug', true);
         $request = $this->makeJsonRequest();
@@ -145,7 +145,7 @@ class JsonApiExceptionHandlerTest extends TestCase
         $this->assertNotNull($errorContent->meta->exception->file);
     }
 
-    public function testErrorResponseHasMetaFilledWithDebugFalse()
+    public function test_error_response_has_meta_filled_with_debug_false()
     {
         Config::set('app.debug', false);
         $request = $this->makeJsonRequest();

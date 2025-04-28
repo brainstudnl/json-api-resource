@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 
 class JsonApiResourceCollectionRegisterTest extends TestCase
 {
-    public function testBasicResourceCollectionResource()
+    public function test_basic_resource_collection_resource()
     {
         $accounts = Account::factory()->count(3)->create();
 
@@ -27,7 +27,7 @@ class JsonApiResourceCollectionRegisterTest extends TestCase
         ]);
     }
 
-    public function testCollectionResourceWithRelations()
+    public function test_collection_resource_with_relations()
     {
 
         $others = Account::factory()->count(3)->create();
@@ -47,7 +47,7 @@ class JsonApiResourceCollectionRegisterTest extends TestCase
         ]);
     }
 
-    public function testCollectionResourceEnlargeResourceDepth1()
+    public function test_collection_resource_enlarge_resource_depth1()
     {
         $someBloke = Account::factory()->create();
 
@@ -101,7 +101,7 @@ class JsonApiResourceCollectionRegisterTest extends TestCase
         ]);
     }
 
-    public function testAddMetaToResources(): void
+    public function test_add_meta_to_resources(): void
     {
         $accounts = Account::factory()->count(3)->create();
 
