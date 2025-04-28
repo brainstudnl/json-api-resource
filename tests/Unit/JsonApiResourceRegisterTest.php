@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 
 class JsonApiResourceRegisterTest extends TestCase
 {
-    public function testBasicResource()
+    public function test_basic_resource()
     {
         $account = Account::factory()->create();
 
@@ -31,7 +31,7 @@ class JsonApiResourceRegisterTest extends TestCase
         ]);
     }
 
-    public function testBasicResourceCollection()
+    public function test_basic_resource_collection()
     {
         $accounts = Account::factory()->count(3)->create();
 
@@ -43,7 +43,7 @@ class JsonApiResourceRegisterTest extends TestCase
         ]);
     }
 
-    public function testResourceWithEmptyRelationLoaded()
+    public function test_resource_with_empty_relation_loaded()
     {
         $account = Account::factory()
             ->create();
@@ -58,7 +58,7 @@ class JsonApiResourceRegisterTest extends TestCase
         ]);
     }
 
-    public function testRelatedResource()
+    public function test_related_resource()
     {
         $post = Post::factory()->create();
         $author = $post->author;
@@ -74,7 +74,7 @@ class JsonApiResourceRegisterTest extends TestCase
         ]);
     }
 
-    public function testRelatedResources()
+    public function test_related_resources()
     {
         $post = Post::factory()
             ->has(Comment::factory()->count(3))
@@ -92,7 +92,7 @@ class JsonApiResourceRegisterTest extends TestCase
         ]);
     }
 
-    public function testDuplicatedRelatedResources()
+    public function test_duplicated_related_resources()
     {
         $post = Post::factory()->create();
         $author = $post->author;
@@ -116,7 +116,7 @@ class JsonApiResourceRegisterTest extends TestCase
         ]);
     }
 
-    public function testDeepRelatedResource()
+    public function test_deep_related_resource()
     {
         $account = Account::factory()->create();
 
@@ -148,7 +148,7 @@ class JsonApiResourceRegisterTest extends TestCase
         ]);
     }
 
-    public function testTooDeepRelatedResource()
+    public function test_too_deep_related_resource()
     {
         $account = Account::factory()->create();
 
@@ -179,7 +179,7 @@ class JsonApiResourceRegisterTest extends TestCase
         $response->assertJsonMissing(['id' => $commentAuthor->identifier]);
     }
 
-    public function testResourceWithMetaData()
+    public function test_resource_with_meta_data()
     {
         $account = Account::factory()
             ->has(Post::factory()->count(10))
@@ -199,7 +199,7 @@ class JsonApiResourceRegisterTest extends TestCase
         ]);
     }
 
-    public function testResourceWithLinkData()
+    public function test_resource_with_link_data()
     {
         $link = 'https://some-link-to-blog.com';
         $post = Post::factory([
@@ -216,7 +216,7 @@ class JsonApiResourceRegisterTest extends TestCase
         ]);
     }
 
-    public function testResourceSparseFieldset()
+    public function test_resource_sparse_fieldset()
     {
         $post = Post::factory()->create();
 
@@ -231,7 +231,7 @@ class JsonApiResourceRegisterTest extends TestCase
         $response->assertJsonMissing(['content' => $post->content]);
     }
 
-    public function testResourceIncludedSparseFieldset()
+    public function test_resource_included_sparse_fieldset()
     {
         $account = Account::factory(['email' => 'bloke@example.org'])->create();
 
@@ -254,7 +254,7 @@ class JsonApiResourceRegisterTest extends TestCase
         ]);
     }
 
-    public function testResourceDoubleLoadedDoesNotOverwriteButMerge()
+    public function test_resource_double_loaded_does_not_overwrite_but_merge()
     {
         $posterAccount = Account::factory()->create(['email' => 'markie@example.org']);
         $commenterAccount = Account::factory()->create(['email' => 'commenter@example.org']);
@@ -284,7 +284,7 @@ class JsonApiResourceRegisterTest extends TestCase
         ]);
     }
 
-    public function testAddMetadataShowsInRepsonse()
+    public function test_add_metadata_shows_in_repsonse()
     {
         $author = Account::factory()->create();
         $posts = Post::factory(10)->for($author, 'author')->create();
@@ -303,7 +303,7 @@ class JsonApiResourceRegisterTest extends TestCase
         $response->assertJsonFragment(['experienced_author' => true]);
     }
 
-    public function testAddMetadataMultipleTimesShowsAll()
+    public function test_add_metadata_multiple_times_shows_all()
     {
         Account::factory()->create();
 
@@ -320,7 +320,7 @@ class JsonApiResourceRegisterTest extends TestCase
         $response->assertJsonFragment(['extra_metadata' => true]);
     }
 
-    public function testAddMetadataOverwritesExistingKeys()
+    public function test_add_metadata_overwrites_existing_keys()
     {
         $author = Account::factory()->create();
         Post::factory(10)->for($author, 'author')->create();

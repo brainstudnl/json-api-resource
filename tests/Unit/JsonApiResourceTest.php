@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 
 class JsonApiResourceTest extends TestCase
 {
-    public function testBasicResource()
+    public function test_basic_resource()
     {
         $developer = Developer::factory()->create();
 
@@ -25,7 +25,7 @@ class JsonApiResourceTest extends TestCase
         $response->assertExactJson(['data' => $this->createJsonResource($developer)]);
     }
 
-    public function testNonEloquentResource()
+    public function test_non_eloquent_resource()
     {
         $intern = new Intern('Markie Mark', 'Development');
 
@@ -35,7 +35,7 @@ class JsonApiResourceTest extends TestCase
         $response->assertJsonFragment(['id' => $intern->id]);
     }
 
-    public function testBasicResourceCollection()
+    public function test_basic_resource_collection()
     {
         $developers = Developer::factory()->count(3)->create();
 
@@ -47,7 +47,7 @@ class JsonApiResourceTest extends TestCase
         ]);
     }
 
-    public function testBasicResourceWithOptionalField()
+    public function test_basic_resource_with_optional_field()
     {
         $developer = Developer::factory()->create(['email' => 'markie@brainstud.dev']);
 
@@ -57,7 +57,7 @@ class JsonApiResourceTest extends TestCase
         $response->assertExactJson(['data' => $this->createJsonResource($developer)]);
     }
 
-    public function testResourceWithEmptyRelationLoaded()
+    public function test_resource_with_empty_relation_loaded()
     {
         $account = Developer::factory()
             ->create();
@@ -72,7 +72,7 @@ class JsonApiResourceTest extends TestCase
         ]);
     }
 
-    public function testSingleRelatedResource()
+    public function test_single_related_resource()
     {
         $pullRequest = PullRequest::factory()->create();
         $developer = $pullRequest->developer;
@@ -92,7 +92,7 @@ class JsonApiResourceTest extends TestCase
         ]);
     }
 
-    public function testRelatedResources()
+    public function test_related_resources()
     {
         $pullRequest = PullRequest::factory()
             ->has(Review::factory()->count(3))
@@ -114,7 +114,7 @@ class JsonApiResourceTest extends TestCase
         ]);
     }
 
-    public function testDuplicatedRelatedResources()
+    public function test_duplicated_related_resources()
     {
         $pullRequest = PullRequest::factory()->create();
         $developer = $pullRequest->developer;
@@ -142,7 +142,7 @@ class JsonApiResourceTest extends TestCase
         ]);
     }
 
-    public function testDeepRelatedResource()
+    public function test_deep_related_resource()
     {
         $developer = Developer::factory()->create();
 
@@ -177,7 +177,7 @@ class JsonApiResourceTest extends TestCase
         ]);
     }
 
-    public function testTooDeepRelatedResource()
+    public function test_too_deep_related_resource()
     {
         $developer = Developer::factory()->create();
 
@@ -210,7 +210,7 @@ class JsonApiResourceTest extends TestCase
         $response->assertJsonMissing(['id' => $reviewer->identifier]);
     }
 
-    public function testResourceDoubleLoadedDoesNotOverwriteButMerge()
+    public function test_resource_double_loaded_does_not_overwrite_but_merge()
     {
         $prDeveloper = Developer::factory()->create();
         $reviewer = Developer::factory()->create();
@@ -243,7 +243,7 @@ class JsonApiResourceTest extends TestCase
         ]);
     }
 
-    public function testAddMetadataShowsInRepsonse()
+    public function test_add_metadata_shows_in_repsonse()
     {
         $developer = Developer::factory()
             ->has(PullRequest::factory(10))
@@ -263,7 +263,7 @@ class JsonApiResourceTest extends TestCase
         $response->assertJsonFragment(['experienced_developer' => true]);
     }
 
-    public function testAddMetadataMultipleTimesShowsAll()
+    public function test_add_metadata_multiple_times_shows_all()
     {
         Developer::factory()->create();
 
@@ -280,7 +280,7 @@ class JsonApiResourceTest extends TestCase
         $response->assertJsonFragment(['extra_metadata' => true]);
     }
 
-    public function testAddMetadataOverwritesExistingKeys()
+    public function test_add_metadata_overwrites_existing_keys()
     {
         Developer::factory()
             ->has(PullRequest::factory(10))
@@ -298,7 +298,7 @@ class JsonApiResourceTest extends TestCase
         $response->assertJsonMissing(['experienced_author' => true]);
     }
 
-    public function testResourceSparseFieldset()
+    public function test_resource_sparse_fieldset()
     {
         $pullRequest = PullRequest::factory()->create();
 
@@ -317,7 +317,7 @@ class JsonApiResourceTest extends TestCase
         $response->assertJsonMissing(['description' => $pullRequest->description]);
     }
 
-    public function testResourceIncludedSparseFieldset()
+    public function test_resource_included_sparse_fieldset()
     {
         $developer = Developer::factory(['email' => 'bloke@example.org'])->create();
 
