@@ -143,9 +143,12 @@ abstract class JsonApiResource extends JsonResource
     /**
      * Define the `id` for the resource.
      *
-     * If this method is not overwritten, the package will try to guess the
-     * `id` by (in order) the `id` in `registerData`, calling the Eloquent
-     * method `getRouteKeyName`, an `id` property or return `null`.
+     * Defaults to return null.
+     * Should be overwritten to use a custom `id`.
+     *
+     * __NOTE__: If this method is not overwritten:
+     * The package will try to guess the `id` by (in order) the `id` in `registerData`,
+     * calling the Eloquent method `getRouteKeyName`, an `id` property or return `null`.
      */
     protected function toId(): string|int|null
     {
