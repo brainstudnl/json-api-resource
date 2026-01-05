@@ -6,6 +6,10 @@ trait Id
 {
     private function getId(): int|string|null
     {
+        if ($this->resource === null) {
+            return null;
+        }
+
         return $this->toId() ?? $this->guessId();
     }
 

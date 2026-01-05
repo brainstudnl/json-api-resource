@@ -35,6 +35,14 @@ class JsonApiResourceTest extends TestCase
         $response->assertJsonFragment(['id' => $intern->id]);
     }
 
+    public function test_null_resource_handled_gracefully()
+    {
+        Route::get('test-route', fn () => new InternResource(null));
+        $response = $this->getJson('test-route');
+
+        $response->assertJson(['data' => []]);
+    }
+
     public function test_basic_resource_collection()
     {
         $developers = Developer::factory()->count(3)->create();
