@@ -3,8 +3,8 @@ name: test
 on:
   pull_request:
     branches:
-      - 'main'
-      - 'development'
+      - "main"
+      - "development"
 
 jobs:
   test:
@@ -40,30 +40,26 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - uses: php-actions/composer@v6
         with:
-          php-version: ${{ matrix.php }}
-          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv
-          coverage: none
+          php_version: "8.5"
 
-      - name: Install dependencies
-        run: |
-          composer require "laravel/framework:${{ matrix.laravel }}" --no-interaction --no-update
-          composer require "orchestra/testbench:${{ matrix.testbench }}" "phpunit/phpunit:${{ matrix.phpunit }}" --dev --no-interaction --no-update
-          composer update --prefer-dist --no-interaction --no-progress
-
-      - name: Execute tests
-        run: vendor/bin/phpunit
+      - name: PHPUnit Tests
+        uses: php-actions/phpunit@master
+        with:
+          version: 11
+          php_version: "8.5"
+          bootstrap: vendor/autoload.php
+          configuration: ./phpunit.xml
 
   lint:
     runs-on: ubuntu-latest
     steps:
-        - uses: actions/checkout@v1
-        - name: "laravel-pint"
-          uses: aglipanci/laravel-pint-action@2.0.0
-          with:
-            preset: laravel
-            verboseMode: true
-            testMode: true
-            onlyDirty: true
+      - uses: actions/checkout@v1
+      - name: "laravel-pint"
+        uses: aglipanci/laravel-pint-action@2.0.0
+        with:
+          preset: laravel
+          verboseMode: true
+          testMode: true
+          onlyDirty: true
