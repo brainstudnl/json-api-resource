@@ -3,33 +3,39 @@
 namespace Brainstud\JsonApi\Tests\Resources;
 
 use Brainstud\JsonApi\Resources\JsonApiResource;
+use Illuminate\Http\Request;
 
 class AccountResource extends JsonApiResource
 {
-    protected function register(): array
+    protected string $type = 'accounts';
+
+    protected function toId(): string|int|null
     {
-        $data = [
-            'id' => $this->resource->identifier,
-            'type' => 'accounts',
-            'attributes' => [
-                'name' => $this->resource->name,
-            ],
-            'relationships' => [
-                'posts' => ['posts', PostResourceCollection::class],
-                'comments' => ['comments', CommentResourceCollection::class],
-            ],
+        return $this->resource->identifier;
+    }
+
+    public function toAttributes(Request $request): array
+    {
+        return array_filter([
+            'name' => $this->resource->name,
+            'email' => $this->resource->email ?? null,
+        ]);
+    }
+
+    protected function toRelationships(Request $request): array
+    {
+        return [
+            'posts' => ['posts', PostResourceCollection::class],
+            'comments' => ['comments', CommentResourceCollection::class],
         ];
+    }
 
-        if ($this->resource->email) {
-            $data['attributes']['email'] = $this->resource->email;
-        }
-
+    protected function toMeta(Request $request): array
+    {
         if ($this->resource->posts()->count() >= 10) {
-            $data['meta'] = [
-                'experienced_author' => true,
-            ];
+            return ['experienced_author' => true];
         }
 
-        return $data;
+        return [];
     }
 }

@@ -15,13 +15,6 @@ abstract class JsonApiResource extends JsonResource
     use Traits\Relationships;
 
     /**
-     * The registered resource data.
-     *
-     * @deprecated
-     */
-    private array $registerData;
-
-    /**
      * The resource response data.
      */
     private array $data;
@@ -58,7 +51,6 @@ abstract class JsonApiResource extends JsonResource
 
         $this->maxResourceDepth = $maxResourceDepth ?? 2;
         $this->resourceDepth = $resourceDepth ?? 0;
-        $this->registerData = $this->register();
         $this->resourceKey = "{$this->getType()}.{$this->getId()}";
     }
 
@@ -81,11 +73,13 @@ abstract class JsonApiResource extends JsonResource
      * Override Laravel 12's implementation to prevent circular dependency
      * between toArray() and toAttributes().
      */
-    public function resolveResourceData($request): array
+    public function resolveResourceData(Request $request): array
     {
-        return is_null($this->resource)
-            ? []
-            : $this->addToResponse($request, $this->getResourceData($request));
+        if (is_null($this->resource)) {
+            return [];
+        }
+
+        return $this->getResourceData($request);
     }
 
     /**
@@ -160,8 +154,8 @@ abstract class JsonApiResource extends JsonResource
      * Should be overwritten to use a custom `id`.
      *
      * __NOTE__: If this method is not overwritten:
-     * The package will try to guess the `id` by (in order) the `id` in `registerData`,
-     * calling the Eloquent method `getRouteKeyName`, an `id` property or return `null`.
+     * The package will try to guess the `id` by calling the Eloquent method
+     * `getRouteKeyName`, an `id` property or return `null`.
      */
     protected function toId(): string|int|null
     {
@@ -171,64 +165,58 @@ abstract class JsonApiResource extends JsonResource
     /**
      * Get the type of the resource.
      *
-     * Default to either `registerData['type']` or a
-     * `type` field on the resource.
+     * Defaults to the `$type` property on the resource class.
+     * Should be overwritten or set as a property.
      */
     protected function getType(): string
     {
-        return $this->registerData['type'] ?? $this->type;
+        return $this->type;
     }
 
     /**
-     * Define the attributes for the resource.
+     * Transform the resource into an array of attributes for JSON:API.
      *
-     * Default to either `registerData['attributes']` or an empty array.
-     * Should be overwritten to create custom attributes.
+     * This method is overridden from Laravel's JsonResource to provide
+     * JSON:API-specific behavior. In JSON:API, attributes are just one part
+     * of the resource (alongside id, type, relationships, etc.).
+     *
+     * Unlike Laravel's default implementation which returns the full resource,
+     * this should return ONLY the attributes portion.
      */
     public function toAttributes(Request $request): array
     {
-        return $this->registerData['attributes'] ?? [];
+        return [];
     }
 
     /**
      * Define the relationships for the resource.
      *
-     * Default to either `registerData['relationships']` or an empty array.
+     * Defaults to an empty array.
      * Should be overwritten to create custom relationships.
      */
     protected function toRelationships(Request $request): array
     {
-        return $this->registerData['relationships'] ?? [];
+        return [];
     }
 
     /**
      * Define the metadata for the resource.
      *
-     * Default to either `registerData['meta']` or an empty array.
+     * Defaults to an empty array.
      * Should be overwritten to create custom metadata.
      */
     protected function toMeta(Request $request): array
     {
-        return $this->registerData['meta'] ?? [];
+        return [];
     }
 
     /**
      * Define the links for the resource.
      *
-     * Default to either `registerData['links']` or an empty array.
+     * Defaults to an empty array.
      * Should be overwritten to create custom links.
      */
     protected function toLinks(Request $request): array
-    {
-        return $this->registerData['links'] ?? [];
-    }
-
-    /**
-     * Register the resource definition.
-     *
-     * @deprecated Use method based resource definitions instead.
-     */
-    protected function register(): array
     {
         return [];
     }

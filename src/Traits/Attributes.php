@@ -9,8 +9,8 @@ trait Attributes
     /**
      * Get the attributes for the resource.
      *
-     * If the resource is defined via a `register` method, this wile use
-     * registration data. Else return the value of `toAttributes`.
+     * Returns the value of `toAttributes` which should be overridden
+     * in child classes to define JSON:API attributes.
      */
     private function getAttributes($request): array
     {
