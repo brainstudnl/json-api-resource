@@ -75,6 +75,12 @@ abstract class JsonApiResource extends JsonResource
             : $this->addToResponse($request, $this->getResourceData($request));
     }
 
+    /**
+     * Resolve the resource data to an array.
+     *
+     * Override Laravel 12's implementation to prevent circular dependency
+     * between toArray() and toAttributes().
+     */
     public function resolveResourceData($request): array
     {
         return is_null($this->resource)
