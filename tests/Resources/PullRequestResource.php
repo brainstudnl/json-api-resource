@@ -9,7 +9,7 @@ class PullRequestResource extends JsonApiResource
 {
     protected string $type = 'pull_requests';
 
-    protected function toAttributes(Request $request): array
+    public function toAttributes(Request $request): array
     {
         return [
             'title' => $this->resource->title,

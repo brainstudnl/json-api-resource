@@ -9,7 +9,7 @@ class DeveloperResource extends JsonApiResource
 {
     protected string $type = 'developers';
 
-    protected function toAttributes(Request $request): array
+    public function toAttributes(Request $request): array
     {
         return [
             'name' => $this->resource->name,

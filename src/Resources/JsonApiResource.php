@@ -172,7 +172,7 @@ abstract class JsonApiResource extends JsonResource
      * Default to either `registerData['attributes']` or an empty array.
      * Should be overwritten to create custom attributes.
      */
-    protected function toAttributes(Request $request): array
+    public function toAttributes(Request $request): array
     {
         return $this->registerData['attributes'] ?? [];
     }

@@ -9,7 +9,7 @@ class ReviewResource extends JsonApiResource
 {
     protected string $type = 'reviews';
 
-    protected function toAttributes(Request $request): array
+    public function toAttributes(Request $request): array
     {
         return [
             'content' => $this->resource->content,
