@@ -76,6 +76,19 @@ abstract class JsonApiResource extends JsonResource
     }
 
     /**
+     * Resolve the resource data to an array.
+     *
+     * Override Laravel 12's implementation to prevent circular dependency
+     * between toArray() and toAttributes().
+     */
+    public function resolveResourceData($request): array
+    {
+        return is_null($this->resource)
+            ? []
+            : $this->addToResponse($request, $this->getResourceData($request));
+    }
+
+    /**
      * Returns the value of $this->data and sets it if it's empty.
      */
     public function getResourceData($request): array
@@ -172,7 +185,7 @@ abstract class JsonApiResource extends JsonResource
      * Default to either `registerData['attributes']` or an empty array.
      * Should be overwritten to create custom attributes.
      */
-    protected function toAttributes(Request $request): array
+    public function toAttributes(Request $request): array
     {
         return $this->registerData['attributes'] ?? [];
     }
