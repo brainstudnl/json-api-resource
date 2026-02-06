@@ -75,6 +75,13 @@ abstract class JsonApiResource extends JsonResource
             : $this->addToResponse($request, $this->getResourceData($request));
     }
 
+    public function resolveResourceData($request): array
+    {
+        return is_null($this->resource)
+            ? []
+            : $this->addToResponse($request, $this->getResourceData($request));
+    }
+
     /**
      * Returns the value of $this->data and sets it if it's empty.
      */
